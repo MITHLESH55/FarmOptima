@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from app.schemas.common import LocationRequest, DataProvenance
 
 
@@ -7,6 +7,9 @@ class CropScore(BaseModel):
     topsis_closeness: float
     electre_net_outranking: int
     rank: int
+    tie_break_applied: bool = False
+    tie_break_reason: str | None = None
+    criteria_scores: dict[str, float] = Field(default_factory=dict)
 
 
 class ParetoPoint(BaseModel):
@@ -46,8 +49,32 @@ class RecommendationResponse(BaseModel):
     partial_data_reason: str | None = None
 
     ndvi: float
+    ndvi_status: str | None = None
     satellite_scene_date: str | None  # Scene acquisition date from Sentinel-2
     satellite_tile_url: str | None = None  # Tile URL for satellite visualization
+
+    def model_copy(self, *, update=None, deep=False, **kwargs):
+        """Keep NDVI status synchronized when a recommendation snapshot is copied."""
+        data = self.model_dump(mode="python")
+        if update:
+            data.update(update)
+
+        if data.get("ndvi") is not None:
+            from app.core.environmental_interpretation import interpret_ndvi
+
+            data["ndvi_status"] = interpret_ndvi(float(data["ndvi"]))
+
+        return self.__class__.model_validate(data)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _backfill_legacy_ndvi_status(cls, values):
+        if isinstance(values, dict) and values.get("ndvi") is not None:
+            from app.core.environmental_interpretation import interpret_ndvi
+
+            expected_status = interpret_ndvi(float(values["ndvi"]))
+            values["ndvi_status"] = expected_status
+        return values
     
     # Weather data
     rainfall_mm_last_30d: float

@@ -24,7 +24,9 @@ class Recommendation(Base):
 
     # Raw environmental readings at the time of this run
     ndvi = Column(Float)
-    
+    ndvi_status = Column(String(40))
+    satellite_scene_date = Column(String(30))
+
     # Weather readings
     soil_ph = Column(Float)
     soil_moisture_pct = Column(Float)

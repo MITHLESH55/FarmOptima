@@ -32,7 +32,26 @@ def test_db_engine():
 
 @pytest.fixture(scope="function")
 def client(test_db_engine):
-    """A TestClient with the real app, but pointed at the isolated test DB."""
+    """A TestClient with the real app, but pointed at the isolated test DB.
+
+    The slowapi rate limiter uses in-memory storage keyed by remote address.
+    TestClient always presents as "testclient", so without a reset the 20/min
+    limit accumulates across the entire test session, causing spurious 429s on
+    later tests.  We clear the limiter's storage on every test function to keep
+    each test independent — this does NOT weaken production rate limiting.
+    """
+    from app.utils.rate_limit import limiter
+    # Reset in-memory rate-limit counters so each test starts fresh.
+    # limiter._storage is the MovingWindowRateLimiter / MemoryStorage backend.
+    try:
+        limiter._storage.reset()
+    except AttributeError:
+        # Older slowapi versions expose the storage differently; fall back safely.
+        try:
+            limiter.reset()
+        except Exception:
+            pass
+
     TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
 
     def override_get_db():

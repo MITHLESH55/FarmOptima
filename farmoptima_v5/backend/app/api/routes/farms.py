@@ -11,7 +11,7 @@ router = APIRouter(prefix="/farms", tags=["farms"])
 
 @router.get("", response_model=list[FarmOut])
 def list_farms(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(Farm).order_by(Farm.created_at.desc()).all()
+    return db.query(Farm).filter(Farm.user_id == current_user.id).order_by(Farm.created_at.desc()).all()
 
 
 @router.post("", response_model=FarmOut)
@@ -19,7 +19,7 @@ def create_farm(
     loc: LocationRequest, name: str | None = None,
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user),
 ):
-    farm = Farm(name=name, latitude=loc.lat, longitude=loc.lon)
+    farm = Farm(name=name, latitude=loc.lat, longitude=loc.lon, user_id=current_user.id)
     db.add(farm)
     db.commit()
     db.refresh(farm)

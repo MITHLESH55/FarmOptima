@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import LocationBar from "./components/dashboard/LocationBar";
 import LocationMapModal from "./components/dashboard/LocationMapModal";
 import HeroRecommendation from "./components/dashboard/HeroRecommendation";
+import AIAssistantCard from "./components/dashboard/AIAssistantCard";
 import SectionTabs from "./components/dashboard/SectionTabs";
 import LiveFieldDataPanel from "./components/dashboard/LiveFieldDataPanel";
 import AHPRankingPanel from "./components/dashboard/AHPRankingPanel";
@@ -350,6 +351,11 @@ export default function App() {
 
             {/* Hero Recommendation Component */}
             <HeroRecommendation data={data} loading={loading} locale={locale} />
+
+            {/* AI Assistant Card (Phase 2.4) */}
+            {data && (
+              <AIAssistantCard data={data} token={token} locale={locale} />
+            )}
 
             {/* Section Tabs Controller */}
             {data && (

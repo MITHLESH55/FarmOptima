@@ -35,3 +35,23 @@ def get_current_user(token: str | None = Depends(oauth2_scheme), db: Session = D
         raise AuthError("User not found or inactive.")
 
     return user
+
+
+def get_authorized_recommendation(recommendation_id: int, current_user: User, db: Session):
+    """
+    Retrieves a recommendation and enforces ownership.
+    Returns 404 (RecommendationNotFoundError) if it does not exist OR belongs to another user
+    to prevent revealing the existence of other users' recommendations.
+    """
+    from app.models import Recommendation, Farm
+    from app.utils.exceptions import RecommendationNotFoundError
+
+    rec = db.query(Recommendation).filter(Recommendation.id == recommendation_id).first()
+    if not rec:
+        raise RecommendationNotFoundError(f"Recommendation {recommendation_id} not found.")
+
+    farm = db.query(Farm).filter(Farm.id == rec.farm_id).first()
+    if not farm or farm.user_id != current_user.id:
+        raise RecommendationNotFoundError(f"Recommendation {recommendation_id} not found.")
+
+    return rec

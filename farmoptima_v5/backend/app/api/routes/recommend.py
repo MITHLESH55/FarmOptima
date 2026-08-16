@@ -20,18 +20,24 @@ from app.services.soil_service import get_soil_for_location
 from app.services.market_service import load_market_prices
 from app.services.explanation_service import build_explanation
 from app.core.criteria import build_decision_matrix, DEFAULT_AHP_PAIRWISE_MATRIX, CRITERIA_NAMES
+from app.core.environmental_interpretation import interpret_ndvi
 from app.core.mcdm import ahp_weights, topsis, electre_i
+from app.core.ranking_tiebreak import resolve_tie_break_order
 from app.core.fuzzy_ahp import crisp_to_default_fuzzy, select_ahp_weights
 from app.core.nsga2 import optimize_resources_multiobjective
 from app.crop_database import CROP_DATABASE
 from app.config import settings
 from app.models import Recommendation, User, Farm
-from app.utils.exceptions import InvalidLocationError
-from app.api.deps import get_current_user
+from app.utils.exceptions import InvalidLocationError, RecommendationNotFoundError
+from app.api.deps import get_current_user, get_authorized_recommendation
 from app.utils.rate_limit import limiter
+from app.schemas.insight import FarmInsightBundle
+from app.services.ai.context_loader import get_context_for_recommendation
+from app.core.insight_engine import generate_environmental_insight, generate_recommendation_insight
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/recommend", tags=["recommend"])
+insight_router = APIRouter(tags=["recommend"])
 
 _market_prices_cache = load_market_prices()
 
@@ -119,10 +125,23 @@ def recommend(
     if recommendation_status != "unavailable":
         for rank, entry in enumerate(topsis_ranked, start=1):
             idx = entry["index"]
+            criteria_scores = {
+                criterion: round(float(score), 6)
+                for criterion, score in zip(CRITERIA_NAMES, decision_matrix[idx])
+            }
             crop_ranking.append(CropScore(
                 crop=crop_names[idx], topsis_closeness=round(entry["closeness"], 4),
                 electre_net_outranking=electre_result["net_outranking_count"][idx], rank=rank,
+                criteria_scores=criteria_scores,
             ))
+
+        crop_ranking = resolve_tie_break_order(
+            crop_ranking,
+            weights_dict,
+            decision_matrix,
+        )
+        for idx, item in enumerate(crop_ranking):
+            item.rank = idx + 1
 
     top_crop_name = crop_ranking[0].crop if crop_ranking else "Wheat"
     top_crop_params = CROP_DATABASE.get(top_crop_name, CROP_DATABASE["Wheat"])
@@ -131,6 +150,7 @@ def recommend(
         "rainfall_mm_last_30d": {"min": float(top_crop_params["ideal_rainfall_min_mm_30d"]), "max": float(top_crop_params["ideal_rainfall_max_mm_30d"])},
         "soil_ph": {"min": float(top_crop_params["ideal_ph_min"]), "max": float(top_crop_params["ideal_ph_max"])},
     }
+    ndvi_status = interpret_ndvi(sat.ndvi)
 
     # 7: NSGA-II multi-objective resource optimization — trades off water gap,
     # fertilizer gap, and resource cost simultaneously (a real Pareto front),
@@ -179,7 +199,7 @@ def recommend(
         data_completeness=completeness,
         recommendation_status=recommendation_status,
         partial_data_reason=partial_data_reason,
-        ndvi=sat.ndvi, satellite_scene_date=sat.scene_date,
+        ndvi=sat.ndvi, ndvi_status=ndvi_status, satellite_scene_date=sat.scene_date,
         satellite_tile_url=get_satellite_map_url(req.lat, req.lon),
         rainfall_mm_last_30d=weather.rainfall_mm_last_30d, avg_temp_c=weather.avg_temp_c,
         humidity_pct=weather.humidity_pct,
@@ -196,7 +216,7 @@ def recommend(
     # Persist every run — this is your audit trail for Chapter 7 validation.
     # First, create or find the farm record for this location
     farm = db.query(Farm).filter(
-        (Farm.latitude == req.lat) & (Farm.longitude == req.lon)
+        (Farm.latitude == req.lat) & (Farm.longitude == req.lon) & (Farm.user_id == current_user.id)
     ).first()
     
     if not farm:
@@ -205,6 +225,7 @@ def recommend(
             name=f"Farm at {req.lat:.4f}, {req.lon:.4f}",
             latitude=req.lat,
             longitude=req.lon,
+            user_id=current_user.id,
         )
         db.add(farm)
         db.commit()
@@ -214,7 +235,7 @@ def recommend(
     record = Recommendation(
         farm_id=farm.id,
         latitude=req.lat, longitude=req.lon,
-        ndvi=sat.ndvi, 
+        ndvi=sat.ndvi, ndvi_status=ndvi_status,
         soil_ph=soil.ph, soil_moisture_pct=soil.soil_moisture_pct,
         soil_nitrogen_mg_kg=soil.nitrogen_total_mg_kg, 
         soil_organic_carbon_g_kg=soil.organic_carbon_g_kg,
@@ -234,3 +255,20 @@ def recommend(
     response.id = record.id
 
     return response
+
+
+@insight_router.get("/recommendations/{recommendation_id}/insight", response_model=FarmInsightBundle)
+def get_recommendation_insight(
+    recommendation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    rec = get_authorized_recommendation(recommendation_id, current_user, db)
+    context = get_context_for_recommendation(rec.id, db)
+    bundle = FarmInsightBundle(
+        recommendation=generate_recommendation_insight(context),
+        environmental=generate_environmental_insight(context, context.crop_ranking[0].crop),
+        comparisons=[],
+    )
+    context.insight_bundle = bundle
+    return bundle

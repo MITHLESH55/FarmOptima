@@ -36,8 +36,11 @@ export function t(key, locale = getCurrentLocale(), params = {}) {
 
 export function translateCropName(cropName, locale = getCurrentLocale()) {
   if (!cropName) return "";
-  const key = `crops.${cropName}`;
+
+  const normalized = String(cropName).trim();
+  const canonical = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
+  const key = `crops.${canonical}`;
   const translated = t(key, locale);
-  return translated === key ? cropName : translated;
+  return translated === key ? normalized : translated;
 }
 
