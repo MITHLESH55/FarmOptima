@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-base: #F7F8F4;
+  --color-surface: #FFFFFF;
+  
+  --color-ink-primary: #14251C;
+  --color-ink-secondary: #5B6B60;
+  
+  --color-brand-primary: #2E6B4F;
+  --color-brand-accent: #C98A3D;
+  
+  --color-status-good: #3A8F6B;
+  --color-status-warn: #D98B3D;
+  --color-status-risk: #C1503C;
+  
+  --color-criterion-climate: #4C8C5F;
+  --color-criterion-soil: #8B6A4A;
+  --color-criterion-water: #3E7FA6;
+  --color-criterion-market: #A9752E;
+  
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  
+  --radius-card: 14px;
+  --shadow-card: 0 1px 2px rgba(20, 37, 28, 0.06), 0 8px 24px rgba(20, 37, 28, 0.06);
+}
+
+:root {
+  --bg-base: #F7F8F4;
+  --bg-surface: #FFFFFF;
+  --ink-primary: #14251C;
+  --ink-secondary: #5B6B60;
+  --brand-primary: #2E6B4F;
+  --brand-accent: #C98A3D;
+  --status-good: #3A8F6B;
+  --status-warn: #D98B3D;
+  --status-risk: #C1503C;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-base);
+  color: var(--ink-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.font-display {
+  font-family: 'Fraunces', Georgia, serif;
+}
+
+.font-body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.leaflet-container {
+  font-family: 'Inter', system-ui, sans-serif;
+  z-index: 10;
+}

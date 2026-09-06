@@ -1,0 +1,25 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+numpy==2.1.1
+requests==2.32.3
+sqlalchemy==2.0.35
+pytest==8.3.3
+httpx==0.27.2
+pyjwt==2.9.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+slowapi==0.1.9
+
+# Optional — only required once you configure GEE_PROJECT in .env for real
+# satellite retrieval (Phase 2). Uncomment when ready:
+earthengine-api==1.1.0
+
+# AI assistant (Phase 2 Step 2.1) — OpenAI client for LLM calls.
+# The library is imported lazily inside llm_client.py so the rest of the
+# application works without it if you don't configure LLM_API_KEY.
+openai>=1.0.0
+
+# Voice interaction (Phase 2.4) — Multipart form/file upload support for FastAPI.
+python-multipart>=0.0.9
