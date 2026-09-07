@@ -185,6 +185,7 @@ def recommend(
             )
             for s in nsga2_result.pareto_front
         ],
+        convergence_history=nsga2_result.hypervolume_history,
         optimizer_method="nsga2-multiobjective",
     )
 

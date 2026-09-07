@@ -190,7 +190,7 @@ export default function LiveFieldDataPanel({ data, locale }) {
                     {data.ndvi !== null && data.ndvi !== undefined ? data.ndvi : t("status.naBadge", locale)}
                   </span>
                   <span className="text-xs font-medium text-status-good bg-status-good/10 px-2 py-0.5 rounded">
-                    {t("satellite.healthyBiomass", locale)}
+                    {data.ndvi_status || t("satellite.healthyBiomass", locale)}
                   </span>
                 </div>
 

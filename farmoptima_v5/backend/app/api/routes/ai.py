@@ -36,9 +36,12 @@ class ChatRequest(BaseModel):
     question is trimmed server-side; empty/whitespace-only questions are
     rejected at validation time (min_length=1 on the stripped value is enforced
     by the strip_question validator).
+    language is accepted for multilingual conversations and defaults to English
+    for backwards compatibility.
     """
     recommendation_id: int
     question: str = Field(..., min_length=1, max_length=2000)
+    language: str = "en"
 
     # Pydantic v2: strip surrounding whitespace and reject blank strings
     from pydantic import field_validator
@@ -50,6 +53,16 @@ class ChatRequest(BaseModel):
         if not stripped:
             raise ValueError("question must not be empty or whitespace-only")
         return stripped
+
+    @field_validator("language", mode="before")
+    @classmethod
+    def normalize_language(cls, value):
+        if value is None:
+            return "en"
+        normalized = str(value).strip().lower()
+        if normalized in {"en", "hi", "mr"}:
+            return normalized
+        return "en"
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +111,7 @@ def ai_chat(
         recommendation_id=payload.recommendation_id,
         question=payload.question,
         db=db,
+        language=payload.language,
     )
 
 

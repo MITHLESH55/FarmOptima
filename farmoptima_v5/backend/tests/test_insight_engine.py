@@ -262,7 +262,7 @@ def test_insight_route_requires_auth_and_ownership(client, auth_headers, monkeyp
     insight_resp = client.get(f"/api/recommendations/{rec_id}/insight", headers=auth_headers)
     assert insight_resp.status_code == 200, insight_resp.text
     body = insight_resp.json()
-    assert body["recommendation"]["top_crop"] in {"Maize", "Wheat"}
+    assert body["recommendation"]["top_crop"] == resp.json()["crop_ranking"][0]["crop"]
 
     other_headers = {"Authorization": "Bearer invalid"}
     other_resp = client.get(f"/api/recommendations/{rec_id}/insight", headers=other_headers)

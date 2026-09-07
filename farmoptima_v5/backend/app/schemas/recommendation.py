@@ -27,6 +27,7 @@ class ResourcePlan(BaseModel):
     optimizer_generations_run: int
     irrigation_schedule: str
     pareto_front: list[ParetoPoint] = []
+    convergence_history: list[float] = Field(default_factory=list)
     optimizer_method: str = "nsga2-multiobjective"
 
 

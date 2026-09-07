@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { t, translateCropName } from "../../i18n";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "";
 
 export default function AIAssistantCard({ data, token, locale }) {
   const [question, setQuestion] = useState("");
@@ -136,6 +136,7 @@ export default function AIAssistantCard({ data, token, locale }) {
         body: JSON.stringify({
           recommendation_id: recommendationId,
           question: q,
+          language: locale,
         }),
       });
 

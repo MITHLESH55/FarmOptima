@@ -81,6 +81,7 @@ class ResourcePlanContext(BaseModel):
     irrigation_schedule: str
     optimizer_method: str
     pareto_front: list[ParetoPointSummary] = []
+    convergence_history: list[float] = Field(default_factory=list)
 
 
 class FarmContext(BaseModel):
@@ -184,12 +185,22 @@ class AIQuestionRequest(BaseModel):
     """
     A farmer's natural-language question about a previous recommendation run.
 
-    language is accepted now for forward-compatibility with step 2.5
-    (multilingual responses).  In step 2.1 all answers are returned in
-    English regardless of this field — do NOT build translation logic here.
+    language is accepted for multilingual conversational support while the
+    reasoning layer remains the same. Unsupported values are normalized to
+    English and never crash the request.
     """
     question: str = Field(..., min_length=1, max_length=2000)
     language: Literal["en", "hi", "mr"] = "en"
+
+    @field_validator("language", mode="before")
+    @classmethod
+    def normalize_language(cls, value):
+        if value is None:
+            return "en"
+        normalized = str(value).strip().lower()
+        if normalized in {"en", "hi", "mr"}:
+            return normalized
+        return "en"
 
 
 class AIAnswerResponse(BaseModel):

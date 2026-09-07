@@ -71,6 +71,14 @@ def resolve_tie_break_order(entries: list[CropRankEntry], ahp_weights: dict[str,
     ordered = sorted(working, key=lambda item: item.topsis_closeness, reverse=True)
     row_by_crop = {entry.crop: idx for idx, entry in enumerate(entries)}
 
+    def _get_criterion_val(item: CropRankEntry, dominant_crit: str, crit_idx: int) -> float:
+        if hasattr(item, "criteria_scores") and item.criteria_scores and dominant_crit in item.criteria_scores:
+            return float(item.criteria_scores[dominant_crit])
+        row = row_by_crop.get(item.crop, 0)
+        if row < len(decision_matrix) and crit_idx < len(decision_matrix[row]):
+            return float(decision_matrix[row][crit_idx])
+        return 0.0
+
     i = 0
     while i < len(ordered):
         j = i + 1
@@ -79,7 +87,6 @@ def resolve_tie_break_order(entries: list[CropRankEntry], ahp_weights: dict[str,
 
         group = ordered[i:j]
         if len(group) > 1:
-            group_positions = [row_by_crop[item.crop] for item in group]
             electre_values = [item.electre_net_outranking for item in group]
             if len(set(electre_values)) > 1:
                 group_reason = "electre_net_outranking"
@@ -87,14 +94,14 @@ def resolve_tie_break_order(entries: list[CropRankEntry], ahp_weights: dict[str,
             else:
                 dominant_criterion = max(ahp_weights, key=ahp_weights.get) if ahp_weights else _CRITERIA_ORDER[0]
                 criterion_idx = _criterion_index(dominant_criterion)
-                matrix_values = [decision_matrix[row_by_crop[item.crop]][criterion_idx] for item in group]
+                matrix_values = [_get_criterion_val(item, dominant_criterion, criterion_idx) for item in group]
                 if len(set(round(v, 12) for v in matrix_values)) > 1:
                     group_reason = f"dominant_criterion:{dominant_criterion}"
                     ordered[i:j] = [
                         group[k]
                         for k in sorted(
                             range(len(group)),
-                            key=lambda idx: decision_matrix[row_by_crop[group[idx].crop]][criterion_idx],
+                            key=lambda idx: _get_criterion_val(group[idx], dominant_criterion, criterion_idx),
                             reverse=True,
                         )
                     ]
@@ -106,7 +113,6 @@ def resolve_tie_break_order(entries: list[CropRankEntry], ahp_weights: dict[str,
                 item.tie_break_applied = True
                 item.tie_break_reason = group_reason
         else:
-            group_reason = None
             group[0].tie_break_applied = False
             group[0].tie_break_reason = None
         i = j

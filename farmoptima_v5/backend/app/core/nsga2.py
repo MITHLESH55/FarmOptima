@@ -46,7 +46,7 @@ class NSGA2Result:
     pareto_front: list[ParetoSolution]     # rank-0, non-dominated solutions
     compromise_solution: ParetoSolution     # single "recommended" pick from the front
     generations_run: int
-    hypervolume_history: list[float]        # front size per generation, for convergence plots
+    hypervolume_history: list[float]        # best compromise fitness per generation, for convergence plots
 
 
 def _objectives(
@@ -186,6 +186,11 @@ def optimize_resources_multiobjective(
                 best = c
         return pop[best][:]
 
+    def normalize(vals):
+        lo, hi = min(vals), max(vals)
+        span = max(hi - lo, 1e-9)
+        return [(v - lo) / span for v in vals]
+
     population = [random_individual() for _ in range(population_size)]
     hypervolume_history = []
 
@@ -200,8 +205,6 @@ def optimize_resources_multiobjective(
             for i in front:
                 ranks[i] = rank_idx
                 crowd[i] = cd[i]
-
-        hypervolume_history.append(len(fronts[0]))  # front size as a simple convergence proxy
 
         # Generate offspring via tournament selection + SBX crossover + mutation
         offspring = []
@@ -228,6 +231,21 @@ def optimize_resources_multiobjective(
                 break
 
         population = [combined[i][:] for i in next_population]
+
+        # Evaluate selected population and record its compromise fitness for this generation
+        gen_objs = [evaluate(ind) for ind in population]
+        gen_fronts = _fast_non_dominated_sort(gen_objs)
+        front0_objs = [gen_objs[i] for i in gen_fronts[0]]
+        if len(front0_objs) == 1:
+            comp_fitness = (front0_objs[0][0] ** 2 + front0_objs[0][1] ** 2) ** 0.5
+        else:
+            wg = normalize([o[0] for o in front0_objs])
+            fg = normalize([o[1] for o in front0_objs])
+            cg = normalize([o[2] for o in front0_objs])
+            dists = [(wg[k] ** 2 + fg[k] ** 2 + cg[k] ** 2) ** 0.5 for k in range(len(front0_objs))]
+            comp_idx = dists.index(min(dists))
+            comp_fitness = (front0_objs[comp_idx][0] ** 2 + front0_objs[comp_idx][1] ** 2) ** 0.5
+        hypervolume_history.append(round(comp_fitness, 5))
 
     # Final evaluation for the returned Pareto front
     final_objs = [evaluate(ind) for ind in population]

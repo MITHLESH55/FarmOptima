@@ -85,10 +85,10 @@ def test_live_data():
     print("DATA VARIATION ANALYSIS")
     print(f"{'='*80}")
     
-    temps = [results_by_location[name]["weather"].avg_temp_c for name, _, _ in TEST_LOCATIONS[1:]]
-    rainfall_vals = [results_by_location[name]["weather"].rainfall_mm_last_30d for name, _, _ in TEST_LOCATIONS[1:]]
-    soil_phs = [results_by_location[name]["soil"].ph for name, _, _ in TEST_LOCATIONS[1:]]
-    ndvi_vals = [results_by_location[name]["satellite"].ndvi for name, _, _ in TEST_LOCATIONS[1:]]
+    temps = [results_by_location[name]["weather"].avg_temp_c for _, _, name in TEST_LOCATIONS[1:]]
+    rainfall_vals = [results_by_location[name]["weather"].rainfall_mm_last_30d for _, _, name in TEST_LOCATIONS[1:]]
+    soil_phs = [results_by_location[name]["soil"].ph for _, _, name in TEST_LOCATIONS[1:]]
+    ndvi_vals = [results_by_location[name]["satellite"].ndvi for _, _, name in TEST_LOCATIONS[1:]]
     
     print(f"\nTemperature variation: {min(temps):.1f}°C - {max(temps):.1f}°C")
     print(f"  → Expected: Different values per location")

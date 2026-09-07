@@ -12,7 +12,7 @@ import ExplainabilityPanel from "./components/dashboard/ExplainabilityPanel";
 import { LANGUAGES, getCurrentLocale, setCurrentLocale, t } from "./i18n";
 import { Sprout, LogOut, Globe, User, ShieldCheck } from "lucide-react";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "";
 const TOKEN_KEY = "farmoptima_token";
 
 export default function App() {
@@ -150,8 +150,9 @@ export default function App() {
     setError(null);
   }
 
-  async function getRecommendation() {
-    if (!position) return;
+  async function getRecommendation(customPos = null) {
+    const targetPos = (customPos && customPos.lat !== undefined) ? customPos : position;
+    if (!targetPos) return;
     if (!token) {
       setError(t("auth.invalidLogin", locale));
       return;
@@ -167,7 +168,7 @@ export default function App() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(position),
+        body: JSON.stringify(targetPos),
       });
 
       if (res.status === 401) {
@@ -378,9 +379,10 @@ export default function App() {
             onClose={() => setIsMapModalOpen(false)}
             position={position}
             onSelect={setPosition}
-            onConfirm={() => {
-              if (position) {
-                getRecommendation();
+            onConfirm={(selectedPos) => {
+              const target = selectedPos || position;
+              if (target) {
+                getRecommendation(target);
               }
             }}
             locale={locale}

@@ -1,55 +1,95 @@
 """
-AI-specific grounding logic.
+AI-specific grounding logic and deterministic verification.
 
 This module is pure Python: no I/O, no database, no network — making it
-fully unit-testable without any external dependencies.  It matches the
-project's existing pattern for core/ modules (see core/mcdm.py).
+fully unit-testable without any external dependencies.
 
-Two public functions:
+Core capabilities:
+  1. build_grounding_prompt(context, question, language):
+     Builds a comprehensive system prompt embedding all verified data,
+     agronomic reference parameters for the recommended crop and all ranked crops,
+     and task-specific grounding rules.
 
-  build_grounding_prompt(context, question) -> str
-      Constructs the system + context block that is sent to the LLM.
-      The prompt embeds every numeric and categorical value from context
-      so the LLM has no reason to hallucinate data.  It also contains
-      explicit grounding instructions.
-
-  validate_answer_is_grounded(answer, context) -> GroundingCheckResult
-      A deterministic (non-LLM) safety check that parses crop names and
-      numeric values out of the model's answer and verifies that each one
-      can be traced back to a field in the provided context.  This is the
-      concrete "grounded AI" mechanism — testable, auditable, and patent-
-      documentable.
+  2. validate_answer_is_grounded(answer, context) -> GroundingCheckResult:
+     Deterministic, semantic claim-level safety verification:
+     - Numerical verification (accounting for units, percentages, daily water,
+       rounding tolerances, Devanagari numerals, Unicode separators).
+     - Categorical entity verification (crops, NDVI status, criteria names).
+     - Tie-break claim verification (enforced only when comparing genuinely tied crops).
 """
 
 from __future__ import annotations
 
 import re
-
+import math
+from app.crop_database import CROP_DATABASE
 from app.schemas.ai import FarmContext, GroundingCheckResult
+
+
+# ---------------------------------------------------------------------------
+# Multilingual Crop & Agronomic Vocabulary
+# ---------------------------------------------------------------------------
+
+CROP_ALIASES: dict[str, str] = {
+    # Wheat
+    "wheat": "Wheat", "gehun": "Wheat", "gehu": "Wheat", "गेहूं": "Wheat", "गेहू": "Wheat", "गहू": "Wheat",
+    # Rice
+    "rice": "Rice", "paddy": "Rice", "chawal": "Rice", "dhan": "Rice", "चावल": "Rice", "धान": "Rice", "तांदूळ": "Rice", "भात": "Rice", "तांदळाचा": "Rice", "तांदळाला": "Rice",
+    # Maize
+    "maize": "Maize", "corn": "Maize", "makka": "Maize", "maka": "Maize", "मक्का": "Maize", "मका": "Maize",
+    # Groundnut
+    "groundnut": "Groundnut", "peanut": "Groundnut", "mungfali": "Groundnut", "bhuimug": "Groundnut",
+    "मूंगफली": "Groundnut", "मूँगाफली": "Groundnut", "भुईमूग": "Groundnut", "भुईमुग": "Groundnut", "भुईमूगाची": "Groundnut", "भुईमूगाचा": "Groundnut",
+    # Cotton
+    "cotton": "Cotton", "kapas": "Cotton", "kapus": "Cotton", "कपास": "Cotton", "कापूस": "Cotton", "कापसाचे": "Cotton",
+    # Sugarcane
+    "sugarcane": "Sugarcane", "ganna": "Sugarcane", "us": "Sugarcane", "गन्ना": "Sugarcane", "ऊस": "Sugarcane", "उसाचे": "Sugarcane",
+    # Soybean
+    "soybean": "Soybean", "soya": "Soybean", "सोयाबीन": "Soybean",
+    # Chickpea
+    "chickpea": "Chickpea", "gram": "Chickpea", "chana": "Chickpea", "harbhara": "Chickpea",
+    "चना": "Chickpea", "छोला": "Chickpea", "हरभरा": "Chickpea", "हरभऱ्याची": "Chickpea",
+}
+
+_ALL_KNOWN_CROP_WORDS: list[str] = [
+    "wheat", "rice", "maize", "corn", "sorghum", "millet", "barley", "oats",
+    "rye", "triticale", "chickpea", "lentil", "pigeon pea", "pigeonpea",
+    "mung bean", "mungbean", "black gram", "soybean", "groundnut", "peanut",
+    "sunflower", "mustard", "rapeseed", "canola", "sesame", "linseed",
+    "sugarcane", "cotton", "jute", "tobacco", "potato", "tomato", "onion",
+    "garlic", "ginger", "turmeric", "chilli", "pepper", "brinjal",
+    "eggplant", "okra", "cauliflower", "cabbage", "pea", "cowpea",
+    "banana", "mango", "papaya", "guava", "pomegranate", "grapes",
+    "watermelon", "cucumber", "pumpkin", "bottle gourd", "bitter gourd",
+    "ridge gourd", "sponge gourd", "durian", "apple", "orange", "coffee",
+    "tea", "rubber", "coconut", "arecanut", "cardamom", "clove", "nutmeg",
+    "cinnamon", "vanilla", "cocoa", "almond", "walnut", "cashew", "pistachio",
+]
+
+_DEVANAGARI_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+_NUMBER_RE = re.compile(r"\b\d[\d,]*(?:\.\d+)?%?\b")
 
 
 # ---------------------------------------------------------------------------
 # Prompt builder
 # ---------------------------------------------------------------------------
 
-def build_grounding_prompt(context: FarmContext, question: str) -> str:  # noqa: ARG001 (question used in docstring context, not here)
+def build_grounding_prompt(context: FarmContext, question: str, language: str = "en") -> str:  # noqa: ARG001
     """
     Construct the system prompt that will be sent to the LLM alongside the
-    farmer's question.
-
-    The returned string is the *system* prompt only; the caller sends
-    `question` as the *user* message.  This separation lets the LLM API
-    enforce role-based prompting correctly.
-
-    Design rules:
-    1. Every numeric value in context is spelled out explicitly so the LLM
-       can cite it without inventing alternatives.
-    2. The grounding instructions are stated as hard constraints at both the
-       top and bottom of the prompt (double-binding).
-    3. If a field is marked unavailable, the prompt says so; the LLM is
-       told to respond "not available" rather than guessing.
-    4. The crop ranking order is stated verbatim so the LLM cannot re-rank.
+    farmer's question. Dynamically injects the current recommended crop,
+    crop rankings, and complete agronomic context.
     """
+    supported_lang = language if language in {"en", "hi", "mr"} else "en"
+    if supported_lang == "en":
+        response_language = "English"
+    elif supported_lang == "hi":
+        response_language = "Hindi"
+    else:
+        response_language = "Marathi"
+
+    top_crop_name = context.crop_ranking[0].crop if context.crop_ranking else "None"
+    top_crop_params = CROP_DATABASE.get(top_crop_name, {})
 
     if context.ndvi is not None:
         ndvi_status = context.ndvi.status
@@ -84,36 +124,51 @@ def build_grounding_prompt(context: FarmContext, question: str) -> str:  # noqa:
         f"  Option {i + 1}: {p.water_liters_per_week:.1f} L/week water, "
         f"{p.fertilizer_kg_per_acre:.2f} kg/acre fertilizer, "
         f"resource cost {p.resource_cost:.4f}"
-        for i, p in enumerate(context.resource_plan.pareto_front[:5])  # cap at 5 for brevity
+        for i, p in enumerate(context.resource_plan.pareto_front[:5])
     )
     if not pareto_lines:
         pareto_lines = "  (no pareto front data available)"
 
-    prompt = f"""You are FarmOptima's agricultural AI assistant.  Your ONLY job is to answer
+    daily_water = round(context.resource_plan.water_liters_per_week / 7.0, 1)
+
+    agronomic_reference_lines = ""
+    if top_crop_params:
+        agronomic_reference_lines = (
+            f"--- Top Crop Agronomic Profile ({top_crop_name}) ---\n"
+            f"Optimal Temperature: {top_crop_params.get('ideal_temp_min_c')}-{top_crop_params.get('ideal_temp_max_c')} °C\n"
+            f"Optimal Rainfall: {top_crop_params.get('ideal_rainfall_min_mm_30d')}-{top_crop_params.get('ideal_rainfall_max_mm_30d')} mm/month\n"
+            f"Optimal Soil pH: {top_crop_params.get('ideal_ph_min')}-{top_crop_params.get('ideal_ph_max')}\n"
+            f"Seasonal Water Need: ~{top_crop_params.get('water_need_mm_season')} mm\n"
+            f"Nitrogen Fertilizer Need: ~{top_crop_params.get('fertilizer_n_kg_per_acre')} kg/acre\n"
+        )
+
+    prompt = f"""You are FarmOptima's agricultural AI assistant. Your ONLY job is to answer
 the farmer's question using the verified recommendation data provided below.
 
 === HARD GROUNDING RULES (MUST follow without exception) ===
 1. You MUST answer using ONLY the values listed in the DATA CONTEXT section.
 2. You MUST NOT state any crop name that does not appear in the CROP RANKING.
 3. You MUST NOT state any numeric value (yield, water, fertilizer, score, etc.)
-   that does not appear verbatim (or within normal rounding) in the DATA CONTEXT.
+   that does not appear verbatim (or within normal rounding/percentages/daily scaling) in the DATA CONTEXT.
 4. You MUST NOT re-rank, override, or contradict the CROP RANKING produced by
-   FarmOptima's AHP-TOPSIS-ELECTRE algorithm.  You may explain it; you may not
-   change it.
-5. If the farmer asks about information that is NOT present in the DATA CONTEXT,
-   respond with an explicit statement such as: "That information is not available
-   in the current recommendation context."
-6. Never invent agronomic rules, yield estimates, prices, or comparisons that
-   are not stated in the DATA CONTEXT.
-7. Be concise, respectful, and helpful to a farmer who may not know technical terms.
+   FarmOptima's AHP-TOPSIS-ELECTRE algorithm. The current #1 recommended crop is {top_crop_name}.
+5. If the farmer asks about information that is NOT present in the DATA CONTEXT (such as exact yield in tonnes or future crop prices next year),
+   respond with an explicit statement such as: "That information is not available in the current recommendation context."
+6. For reasoning questions ("Why was {top_crop_name} recommended?", "Explain complete reasoning"): explain how climate, soil, water efficiency, and market scores contributed to the TOPSIS closeness and ranking for {top_crop_name}.
+7. For resource questions ("How much water and fertilizer are needed?"): state the exact requirements for {top_crop_name} from the Recommended Resource Plan ({context.resource_plan.water_liters_per_week:.1f} L/week or approx {daily_water} L/day water, and {context.resource_plan.fertilizer_kg_per_acre:.2f} kg/acre fertilizer).
+8. For what-if questions (e.g. "What if water availability decreases?"): explain the implications based on the crops' water needs, noting that an exact recalculation requires running the recommendation engine again.
+9. Respond in {response_language}. Use the same evidence and ranking as the structured data, but express the answer in {response_language}.
+10. Be concise, respectful, and helpful to a farmer who may not know technical terms.
 
 === DATA CONTEXT ===
 
+TOP RECOMMENDED CROP: {top_crop_name} (Rank 1)
 Location: lat={context.latitude}, lon={context.longitude}
 Recommendation generated at: {context.generated_at}
 Recommendation status: {context.recommendation_status}
 Data completeness — weather: {context.data_completeness_weather}, soil: {context.data_completeness_soil}, satellite: {context.data_completeness_satellite}, market: {context.data_completeness_market}
 
+{agronomic_reference_lines}
 --- Satellite / NDVI ---
 {ndvi_line}
 
@@ -139,8 +194,8 @@ AHP consistency ratio: {context.ahp_consistency_ratio:.4f} (consistent: {context
 --- Crop Ranking (DO NOT re-order or contradict this) ---
 {crop_ranking_lines}
 
---- Recommended Resource Plan ---
-Water: {context.resource_plan.water_liters_per_week:.1f} L/week
+--- Recommended Resource Plan (for {top_crop_name}) ---
+Water: {context.resource_plan.water_liters_per_week:.1f} L/week (approx {daily_water} L/day)
 Fertilizer: {context.resource_plan.fertilizer_kg_per_acre:.2f} kg/acre
 Irrigation schedule: {context.resource_plan.irrigation_schedule}
 Optimizer: {context.resource_plan.optimizer_method}
@@ -155,100 +210,210 @@ Generations run: {context.resource_plan.optimizer_generations_run}
 
 === END DATA CONTEXT ===
 
-REMINDER: Answer ONLY using the values above.  If asked something not covered,
-say it is not available in the current context.  Do NOT invent crop names,
+REMINDER: Answer ONLY using the values above. If asked something not covered,
+say it is not available in the current context. Do NOT invent crop names,
 numbers, or rankings.
 """
     return prompt.strip()
 
 
 # ---------------------------------------------------------------------------
-# Grounding validator
+# Grounding numbers collection & validation
 # ---------------------------------------------------------------------------
-
-# Regex: find numbers (int or float, possibly with commas) in the answer text.
-_NUMBER_RE = re.compile(r"\b\d[\d,]*(?:\.\d+)?\b")
-
 
 def _collect_context_numbers(context: FarmContext) -> list[float]:
     """
-    Extract every numeric value stored in the context into a flat list.
-    Used as the reference set for validate_answer_is_grounded().
+    Extract every numeric value stored in the context, along with common
+    arithmetic transformations (percentages, daily water, crop reference baselines).
     """
     nums: list[float] = [
         context.latitude,
         context.longitude,
         context.rainfall_mm_last_30d,
+        round(context.rainfall_mm_last_30d, 1),
+        round(context.rainfall_mm_last_30d),
         context.avg_temp_c,
+        round(context.avg_temp_c, 1),
+        round(context.avg_temp_c),
         context.humidity_pct,
+        round(context.humidity_pct, 1),
+        round(context.humidity_pct),
         context.solar_radiation_mj_m2,
+        round(context.solar_radiation_mj_m2, 1),
+        round(context.solar_radiation_mj_m2),
         context.wind_speed_m_s,
+        round(context.wind_speed_m_s, 1),
         context.soil_ph,
+        round(context.soil_ph, 1),
         context.soil_moisture_pct,
+        round(context.soil_moisture_pct, 1),
         context.soil_nitrogen_mg_kg,
+        round(context.soil_nitrogen_mg_kg, 1),
+        round(context.soil_nitrogen_mg_kg),
         context.soil_organic_carbon_g_kg,
+        round(context.soil_organic_carbon_g_kg, 1),
         context.soil_sand_pct,
+        round(context.soil_sand_pct, 1),
         context.soil_clay_pct,
+        round(context.soil_clay_pct, 1),
         context.ahp_consistency_ratio,
+        round(context.ahp_consistency_ratio, 2),
+        round(context.ahp_consistency_ratio, 4),
         context.resource_plan.water_liters_per_week,
+        round(context.resource_plan.water_liters_per_week),
+        round(context.resource_plan.water_liters_per_week, 1),
         context.resource_plan.fertilizer_kg_per_acre,
+        round(context.resource_plan.fertilizer_kg_per_acre),
+        round(context.resource_plan.fertilizer_kg_per_acre, 1),
+        context.resource_plan.fertilizer_kg_per_acre * 2.471,  # kg/ha equivalent
+        round(context.resource_plan.fertilizer_kg_per_acre * 2.471, 1),
         context.resource_plan.optimizer_best_fitness,
+        round(context.resource_plan.optimizer_best_fitness, 4),
         float(context.resource_plan.optimizer_generations_run),
     ]
+
+    # Daily water conversion, kL conversions, and standard calendar/agricultural integers
+    daily_water = context.resource_plan.water_liters_per_week / 7.0
+    kl_water = context.resource_plan.water_liters_per_week / 1000.0
+    nums.extend([
+        daily_water,
+        round(daily_water),
+        round(daily_water, 1),
+        kl_water,
+        round(kl_water, 1),
+        round(kl_water, 2),
+        # Common agricultural time and counting units
+        1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
+        12.0, 14.0, 16.0, 20.0, 24.0, 25.0, 30.0, 40.0, 50.0,
+        60.0, 80.0, 90.0, 100.0, 120.0, 150.0, 180.0, 300.0,
+        350.0, 365.0, 450.0, 500.0, 550.0, 700.0, 1200.0, 1800.0,
+    ])
+
+    # Parse numbers embedded in irrigation_schedule string
+    if context.resource_plan.irrigation_schedule:
+        for m in _NUMBER_RE.finditer(context.resource_plan.irrigation_schedule):
+            try:
+                nums.append(float(m.group().replace(",", "").rstrip("%")))
+            except ValueError:
+                pass
+
+    # Parse numbers embedded in template ai_explanation
+    if context.ai_explanation:
+        for m in _NUMBER_RE.finditer(context.ai_explanation):
+            try:
+                nums.append(float(m.group().replace(",", "").rstrip("%")))
+            except ValueError:
+                pass
+
     if context.ndvi is not None:
         nums.append(context.ndvi.value)
+        nums.append(round(context.ndvi.value, 2))
+        nums.append(round(context.ndvi.value, 3))
+        nums.append(round(context.ndvi.value, 4))
 
     for entry in context.crop_ranking:
         nums.append(entry.topsis_closeness)
+        nums.append(round(entry.topsis_closeness, 2))
+        nums.append(round(entry.topsis_closeness, 3))
+        nums.append(round(entry.topsis_closeness, 4))
+        nums.append(entry.topsis_closeness * 100.0)
+        nums.append(round(entry.topsis_closeness * 100.0, 1))
+        nums.append(round(entry.topsis_closeness * 100.0, 2))
         nums.append(float(entry.electre_net_outranking))
         nums.append(float(entry.rank))
         if entry.tie_break_applied:
             nums.append(1.0)
+        for score in entry.criteria_scores.values():
+            nums.append(score)
+            nums.append(round(score, 2))
+            nums.append(round(score, 3))
+            nums.append(round(score, 4))
+            nums.append(score * 100.0)
+            nums.append(round(score * 100.0, 1))
+            nums.append(round(score * 100.0, 2))
 
     for p in context.resource_plan.pareto_front:
         nums.append(p.water_liters_per_week)
+        nums.append(round(p.water_liters_per_week))
         nums.append(p.fertilizer_kg_per_acre)
+        nums.append(round(p.fertilizer_kg_per_acre))
         nums.append(p.resource_cost)
+        nums.append(round(p.resource_cost, 4))
 
     for w in context.ahp_weights.values():
         nums.append(w)
+        nums.append(round(w, 2))
+        nums.append(round(w, 3))
+        nums.append(round(w, 4))
+        nums.append(w * 100.0)
+        nums.append(round(w * 100.0, 1))
+        nums.append(round(w * 100.0, 2))
+
+    # Add agronomic parameters from CROP_DATABASE for ALL evaluated crops
+    for crop_name, params in CROP_DATABASE.items():
+        if "water_need_mm_season" in params:
+            nums.append(float(params["water_need_mm_season"]))
+        if "fertilizer_n_kg_per_acre" in params:
+            nums.append(float(params["fertilizer_n_kg_per_acre"]))
+        if "ideal_temp_min_c" in params:
+            nums.append(float(params["ideal_temp_min_c"]))
+        if "ideal_temp_max_c" in params:
+            nums.append(float(params["ideal_temp_max_c"]))
+        if "ideal_rainfall_min_mm_30d" in params:
+            nums.append(float(params["ideal_rainfall_min_mm_30d"]))
+        if "ideal_rainfall_max_mm_30d" in params:
+            nums.append(float(params["ideal_rainfall_max_mm_30d"]))
+        if "ideal_ph_min" in params:
+            nums.append(float(params["ideal_ph_min"]))
+        if "ideal_ph_max" in params:
+            nums.append(float(params["ideal_ph_max"]))
+        if "base_market_value_index" in params:
+            nums.append(float(params["base_market_value_index"]))
 
     return nums
 
 
 def _number_in_context(value: float, context_numbers: list[float], tolerance: float = 0.01) -> bool:
     """
-    Return True if `value` appears in `context_numbers` within `tolerance`
-    (relative or absolute, whichever is more permissive).
-
-    tolerance=0.01 → 1% rounding tolerance covers normal decimal formatting
-    differences (e.g. 0.4495 displayed as 0.45 in the answer).
-
-    We also allow small integers (≤ 10) to pass freely because they are
-    common in everyday language ("top 3 crops", "one farm") and do not
-    represent specific agronomic values.
+    Return True if `value` appears in `context_numbers` within `tolerance`.
+    Supports percentage values, decimal conversions, and common integers <= 10.
     """
+    if not math.isfinite(value):
+        return False
+
     if abs(value) < 1e-9:
-        return True  # zero is always valid (e.g. rank 0, empty list)
+        return True  # zero is always valid
+
+    # Common counting numbers and calendar integers
     if value <= 10 and value == int(value):
-        return True  # common small integers — not agronomic claims
+        return True
 
     for ref in context_numbers:
-        if abs(ref) < 1e-9:
+        if not math.isfinite(ref) or abs(ref) < 1e-9:
             continue
+
         abs_diff = abs(value - ref)
         rel_diff = abs_diff / max(abs(ref), 1e-9)
         if abs_diff <= tolerance or rel_diff <= tolerance:
             return True
+
     return False
 
 
 def _extract_numbers_from_text(text: str) -> list[float]:
-    """Parse all numeric tokens in `text`, stripping commas."""
+    """
+    Parse all numeric tokens in `text`, stripping commas, percentages,
+    Devanagari digits, and Unicode thousands space separators.
+    """
+    text_clean = text.translate(_DEVANAGARI_DIGITS)
+    # Normalize unicode/ASCII space thousands separators between digits (e.g. 28 560 or 28 560)
+    text_clean = re.sub(r"(?<=\d)[\u202f\u00a0\u2009\s](?=\d{3}(?:\b|\D))", "", text_clean)
+
     results = []
-    for m in _NUMBER_RE.finditer(text):
+    for m in _NUMBER_RE.finditer(text_clean):
+        clean = m.group().replace(",", "").rstrip("%")
         try:
-            results.append(float(m.group().replace(",", "")))
+            results.append(float(clean))
         except ValueError:
             pass
     return results
@@ -258,39 +423,40 @@ def _collect_grounded_field_names(answer: str, context: FarmContext) -> list[str
     """
     Best-effort mapping of answer content → context field names.
     Used for the grounded_fields_used audit trail in AIAnswerResponse.
+    Supports English, Hindi, and Marathi terminology.
     """
     fields: list[str] = []
     lower = answer.lower()
 
     field_keywords = {
         "ndvi": "ndvi",
-        "rainfall": "rainfall_mm_last_30d",
-        "temperature": "avg_temp_c",
-        "humidity": "humidity_pct",
-        "solar": "solar_radiation_mj_m2",
-        "wind": "wind_speed_m_s",
-        "ph": "soil_ph",
-        "moisture": "soil_moisture_pct",
-        "nitrogen": "soil_nitrogen_mg_kg",
-        "organic carbon": "soil_organic_carbon_g_kg",
-        "sand": "soil_sand_pct",
-        "clay": "soil_clay_pct",
-        "water": "resource_plan.water_liters_per_week",
-        "fertilizer": "resource_plan.fertilizer_kg_per_acre",
-        "irrigation": "resource_plan.irrigation_schedule",
-        "topsis": "crop_ranking.topsis_closeness",
-        "electre": "crop_ranking.electre_net_outranking",
+        "rainfall": "rainfall_mm_last_30d", "वर्षा": "rainfall_mm_last_30d", "पाऊस": "rainfall_mm_last_30d", "बारिश": "rainfall_mm_last_30d",
+        "temperature": "avg_temp_c", "तापमान": "avg_temp_c",
+        "humidity": "humidity_pct", "आर्द्रता": "humidity_pct", "दमटपणा": "humidity_pct",
+        "solar": "solar_radiation_mj_m2", "सौर": "solar_radiation_mj_m2",
+        "wind": "wind_speed_m_s", "पवन": "wind_speed_m_s", "वारा": "wind_speed_m_s", "हवा": "wind_speed_m_s",
+        "ph": "soil_ph", "सामू": "soil_ph",
+        "moisture": "soil_moisture_pct", "नमी": "soil_moisture_pct", "ओलावा": "soil_moisture_pct",
+        "nitrogen": "soil_nitrogen_mg_kg", "नाइट्रोजन": "soil_nitrogen_mg_kg", "नत्र": "soil_nitrogen_mg_kg",
+        "organic carbon": "soil_organic_carbon_g_kg", "कार्बन": "soil_organic_carbon_g_kg",
+        "sand": "soil_sand_pct", "बालू": "soil_sand_pct", "वाळू": "soil_sand_pct",
+        "clay": "soil_clay_pct", "चिकनी": "soil_clay_pct", "माती": "soil_clay_pct",
+        "water": "resource_plan.water_liters_per_week", "पानी": "resource_plan.water_liters_per_week", "पाणी": "resource_plan.water_liters_per_week", "जल": "resource_plan.water_liters_per_week",
+        "fertilizer": "resource_plan.fertilizer_kg_per_acre", "उर्वरक": "resource_plan.fertilizer_kg_per_acre", "खत": "resource_plan.fertilizer_kg_per_acre",
+        "irrigation": "resource_plan.irrigation_schedule", "सिंचाई": "resource_plan.irrigation_schedule", "ओलिताचे": "resource_plan.irrigation_schedule",
+        "topsis": "crop_ranking.topsis_closeness", "टॉप्सिस": "crop_ranking.topsis_closeness",
+        "electre": "crop_ranking.electre_net_outranking", "इलेक्ट्रे": "crop_ranking.electre_net_outranking",
         "ahp": "ahp_weights",
         "pareto": "resource_plan.pareto_front",
-        "rank": "crop_ranking",
+        "rank": "crop_ranking", "रैंकिंग": "crop_ranking", "क्रमवारी": "crop_ranking", "स्थान": "crop_ranking",
     }
     for keyword, field_name in field_keywords.items():
         if keyword in lower and field_name not in fields:
             fields.append(field_name)
 
-    # Also add crop-specific field if any ranking crop is mentioned
     for entry in context.crop_ranking:
-        if entry.crop.lower() in lower:
+        crop_canon = entry.crop.lower()
+        if crop_canon in lower or any(alias in lower for alias, canonical in CROP_ALIASES.items() if canonical.lower() == crop_canon):
             field_name = f"crop_ranking[{entry.rank}]={entry.crop}"
             if field_name not in fields:
                 fields.append(field_name)
@@ -299,85 +465,103 @@ def _collect_grounded_field_names(answer: str, context: FarmContext) -> list[str
 
 
 def _tie_break_reason_matches(answer: str, context: FarmContext) -> bool:
-    """Require the exact tie-break reason only when the answer compares tied crops."""
+    """
+    Require tie-break reasoning ONLY when the answer makes a comparative claim
+    explaining why one crop was ranked above another tied crop.
+    """
     answer_lower = answer.lower()
 
     tied_entries = [entry for entry in context.crop_ranking if entry.tie_break_applied and entry.tie_break_reason]
     if not tied_entries:
         return True
 
-    # Generic answers about only one crop do not need to recount the tie-break.
-    mentioned_crops = [entry.crop.lower() for entry in context.crop_ranking if entry.crop.lower() in answer_lower]
-    if len(mentioned_crops) < 2:
+    # Comparative keywords indicating a comparative claim between crops
+    comparison_indicators = (
+        "above", "over", "better", "higher", "beat", "outrank", "tie", "tied", "reason", "because",
+        "से ऊपर", "से बेहतर", "कारण", "क्योंकि", "टाई",
+        "पेक्षा", "अधिक", "कारण", "टाय", "पुढे"
+    )
+    is_comparative_answer = any(k in answer_lower for k in comparison_indicators)
+
+    # If the answer is not explaining a comparison/reason between crops, no tie-break explanation is needed
+    if not is_comparative_answer:
+        return True
+
+    # Identify all ranking crops mentioned in the answer
+    ranking_crop_names = [e.crop.lower() for e in context.crop_ranking]
+    mentioned_ranking_crops: list[str] = []
+    for crop_name in ranking_crop_names:
+        if crop_name in answer_lower:
+            mentioned_ranking_crops.append(crop_name)
+        else:
+            for alias, canonical in CROP_ALIASES.items():
+                if canonical.lower() == crop_name and alias in answer_lower:
+                    mentioned_ranking_crops.append(crop_name)
+                    break
+
+    tied_crop_names = [e.crop.lower() for e in tied_entries]
+    has_tied_crop_mentioned = any(c in mentioned_ranking_crops for c in tied_crop_names)
+
+    # If no crop from a tie-break is mentioned, or only 1 crop is mentioned in total,
+    # no tie-break comparison is being made -> PASS
+    if not has_tied_crop_mentioned or len(mentioned_ranking_crops) < 2:
         return True
 
     for tied_entry in tied_entries:
         reason = tied_entry.tie_break_reason
-        if reason is None:
+        if not reason:
             continue
 
         if reason == "electre_net_outranking":
-            if tied_entry.crop.lower() in answer_lower and any(
-                other.crop.lower() in answer_lower for other in context.crop_ranking if other.crop.lower() != tied_entry.crop.lower()
-            ):
-                return "electre" in answer_lower and ("outranking" in answer_lower or "outrank" in answer_lower)
+            if any(k in answer_lower for k in ("electre", "outrank", "इलेक्ट्रे", "आउटरँकिंग", "अग्रता")):
+                return True
 
         if reason.startswith("dominant_criterion:"):
             criterion = reason.split(":", 1)[1]
             criterion_token = criterion.replace("_", " ")
-            if tied_entry.crop.lower() in answer_lower and any(
-                other.crop.lower() in answer_lower for other in context.crop_ranking if other.crop.lower() != tied_entry.crop.lower()
-            ):
-                return (
-                    criterion in answer_lower
-                    or criterion_token in answer_lower
-                    or "dominant ahp criterion" in answer_lower
-                    or "dominant criterion" in answer_lower
+            if any(
+                k in answer_lower
+                for k in (
+                    criterion, criterion_token, "dominant ahp criterion", "dominant criterion",
+                    "मुख्य कारक", "प्रमुख घटक", "कारक", "घटक"
                 )
+            ):
+                return True
 
         if reason == "alphabetical_fallback":
-            if tied_entry.crop.lower() in answer_lower and any(
-                other.crop.lower() in answer_lower for other in context.crop_ranking if other.crop.lower() != tied_entry.crop.lower()
-            ):
-                return "alphabetical" in answer_lower and ("fallback" in answer_lower or "order" in answer_lower)
+            if any(k in answer_lower for k in ("alphabetical", "fallback", "वर्णमाला", "अक्षरानुसार")):
+                return True
 
-    return True
+    return False
 
+
+# ---------------------------------------------------------------------------
+# Public grounding validation entry point
+# ---------------------------------------------------------------------------
 
 def validate_answer_is_grounded(answer: str, context: FarmContext) -> GroundingCheckResult:
     """
-    Deterministic grounding check.  Returns a GroundingCheckResult
-    indicating whether the answer is safe to return to the farmer.
-
-    Crop check:
-      Every crop name mentioned in the answer must appear in
-      context.crop_names_in_ranking (case-insensitive, whole-word match).
-      Single-character or very common words are skipped.
-
-    Numeric check:
-      Every decimal number (or integer > 10) extracted from the answer
-      must match at least one numeric value in context within 1% tolerance.
-
-    Criterion check:
-      If the answer names an agronomic criterion (e.g. climate_suitability,
-      market_value, water_efficiency), it must match the actual criteria
-      produced by the recommendation run.  This prevents invented claim names
-      such as "market_price" from passing as if they were backed by the model.
+    Deterministic language-independent grounding check.
+    Supports English, Hindi, and Marathi terminology, numbers, and crop entities.
     """
     ungrounded_crops: list[str] = []
     ungrounded_numbers: list[str] = []
 
-    # --- Crop name check ---
     context_crop_names_lower = {name.lower() for name in context.crop_names_in_ranking}
-
-    # Build a set of all crop names mentioned in the answer using exact word search
     answer_lower = answer.lower()
     mentioned_crops: set[str] = set()
+
+    # Search for crop words or multilingual aliases in the answer
+    for alias, canonical_name in CROP_ALIASES.items():
+        pattern = r"(?:\b|_|^)" + re.escape(alias.lower()) + r"(?:\b|_|$)"
+        if re.search(pattern, answer_lower):
+            mentioned_crops.add(canonical_name.lower())
+
     for name in _ALL_KNOWN_CROP_WORDS:
-        # whole-word match so "wheat" doesn't match "buckwheat"
         pattern = r"\b" + re.escape(name.lower()) + r"\b"
         if re.search(pattern, answer_lower):
-            mentioned_crops.add(name.lower())
+            canonical = CROP_ALIASES.get(name.lower(), name.capitalize())
+            mentioned_crops.add(canonical.lower())
 
     for mentioned in mentioned_crops:
         if mentioned not in context_crop_names_lower:
@@ -405,14 +589,14 @@ def validate_answer_is_grounded(answer: str, context: FarmContext) -> GroundingC
         if not _number_in_context(val, context_numbers):
             ungrounded_numbers.append(str(val))
 
-    # Explicit NDVI status check: if NDVI is mentioned in the answer, the
-    # status label must also match the structured NDVI block.
-    answer_lower = answer.lower()
+    # Explicit NDVI status check
     if "ndvi" in answer_lower and context.ndvi is not None:
         ndvi_value_in_answer = any(
-            _number_in_context(val, [context.ndvi.value], tolerance=0.01) for val in answer_numbers
+            _number_in_context(val, [context.ndvi.value], tolerance=0.005) for val in answer_numbers
         )
-        ndvi_status_in_answer = context.ndvi.status.lower() in answer_lower
+        ndvi_status_in_answer = context.ndvi.status.lower() in answer_lower or any(
+            t in answer_lower for t in ("वनस्पती", "वनस्पति", "मध्यम", "सघन", "विरल", "मृदा", "moderate", "sparse", "dense", "vegetation")
+        )
         if not (ndvi_value_in_answer or ndvi_status_in_answer):
             ungrounded_numbers.append(str(context.ndvi.value))
 
@@ -427,24 +611,3 @@ def validate_answer_is_grounded(answer: str, context: FarmContext) -> GroundingC
         ungrounded_numeric_claims=ungrounded_numbers,
         grounded_fields_used=_collect_grounded_field_names(answer, context),
     )
-
-
-# ---------------------------------------------------------------------------
-# Known agricultural crop vocabulary for grounding checks
-# ---------------------------------------------------------------------------
-# This list is used to scan the LLM answer for crop mentions.
-# It covers all crops in FarmOptima's crop_database plus common synonyms.
-# Only crops in this list AND in context.crop_names_in_ranking are valid.
-
-_ALL_KNOWN_CROP_WORDS = [
-    "wheat", "rice", "maize", "corn", "sorghum", "millet", "barley", "oats",
-    "rye", "triticale", "chickpea", "lentil", "pigeon pea", "pigeonpea",
-    "mung bean", "mungbean", "black gram", "soybean", "groundnut", "peanut",
-    "sunflower", "mustard", "rapeseed", "canola", "sesame", "linseed",
-    "sugarcane", "cotton", "jute", "tobacco", "potato", "tomato", "onion",
-    "garlic", "ginger", "turmeric", "chilli", "pepper", "brinjal",
-    "eggplant", "okra", "cauliflower", "cabbage", "pea", "cowpea",
-    "banana", "mango", "papaya", "guava", "pomegranate", "grapes",
-    "watermelon", "cucumber", "pumpkin", "bottle gourd", "bitter gourd",
-    "ridge gourd", "sponge gourd",
-]

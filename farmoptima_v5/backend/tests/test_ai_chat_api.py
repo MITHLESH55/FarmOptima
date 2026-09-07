@@ -70,6 +70,92 @@ def _register_and_login(client, username, password="password123"):
     return {"Authorization": f"Bearer {resp.json()['access_token']}"}
 
 
+def test_chat_defaults_to_english_when_language_missing(client, auth_headers, monkeypatch):
+    """Missing language should be treated as English for backward compatibility."""
+    rec = _make_recommendation(client, auth_headers, monkeypatch)
+    rec_id = rec["id"]
+    captured = {}
+
+    def fake_call_llm(system_prompt, user_message):
+        captured["prompt"] = system_prompt
+        return "This crop is recommended because it has the highest TOPSIS score."
+
+    monkeypatch.setattr(llm_module, "call_llm", fake_call_llm)
+
+    resp = client.post(
+        "/api/ai/chat",
+        json={"recommendation_id": rec_id, "question": "Why this crop?"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert "Respond in English" in captured["prompt"]
+
+
+def test_hindi_chat_uses_language_instruction(client, auth_headers, monkeypatch):
+    """The same grounded AI flow should be instructed to answer in Hindi."""
+    rec = _make_recommendation(client, auth_headers, monkeypatch)
+    rec_id = rec["id"]
+    captured = {}
+
+    def fake_call_llm(system_prompt, user_message):
+        captured["prompt"] = system_prompt
+        return "यह फसल सबसे अधिक TOPSIS स्कोर के कारण सिफारिश की गई है।"
+
+    monkeypatch.setattr(llm_module, "call_llm", fake_call_llm)
+
+    resp = client.post(
+        "/api/ai/chat",
+        json={"recommendation_id": rec_id, "question": "कौन सी फसल सिफारिश की गई है?", "language": "hi"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert "Respond in Hindi" in captured["prompt"]
+    assert "यह फसल" in resp.json()["answer"]
+
+
+def test_marathi_chat_uses_language_instruction(client, auth_headers, monkeypatch):
+    """The same grounded AI flow should be instructed to answer in Marathi."""
+    rec = _make_recommendation(client, auth_headers, monkeypatch)
+    rec_id = rec["id"]
+    captured = {}
+
+    def fake_call_llm(system_prompt, user_message):
+        captured["prompt"] = system_prompt
+        return "ही फसल सर्वाधिक TOPSIS गुणांकामुळे शिफारस केली गेली आहे."
+
+    monkeypatch.setattr(llm_module, "call_llm", fake_call_llm)
+
+    resp = client.post(
+        "/api/ai/chat",
+        json={"recommendation_id": rec_id, "question": "कोणती फसल शिफारस केली गेली आहे?", "language": "mr"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert "Respond in Marathi" in captured["prompt"]
+    assert "ही फसल" in resp.json()["answer"]
+
+
+def test_unsupported_language_falls_back_to_english(client, auth_headers, monkeypatch):
+    """Unsupported language input should safely fall back to English without crashing."""
+    rec = _make_recommendation(client, auth_headers, monkeypatch)
+    rec_id = rec["id"]
+    captured = {}
+
+    def fake_call_llm(system_prompt, user_message):
+        captured["prompt"] = system_prompt
+        return "This crop is recommended because it has the highest TOPSIS score."
+
+    monkeypatch.setattr(llm_module, "call_llm", fake_call_llm)
+
+    resp = client.post(
+        "/api/ai/chat",
+        json={"recommendation_id": rec_id, "question": "Why this crop?", "language": "fr"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert "Respond in English" in captured["prompt"]
+
+
 def test_placeholder_llm_key_is_not_reported_as_configured(client, monkeypatch):
     """A placeholder value like sk-your_actual_api_key_here must not count as a valid key."""
     monkeypatch.setattr("app.config.settings.llm_api_key", "sk-your_actual_api_key_here")

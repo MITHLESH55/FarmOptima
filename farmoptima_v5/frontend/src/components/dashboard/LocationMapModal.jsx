@@ -89,7 +89,7 @@ export default function LocationMapModal({ isOpen, onClose, position, onSelect, 
             </button>
             <button
               onClick={() => {
-                if (onConfirm) onConfirm();
+                if (onConfirm) onConfirm(position);
                 onClose();
               }}
               disabled={!position}

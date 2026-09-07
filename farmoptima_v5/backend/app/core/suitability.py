@@ -46,7 +46,18 @@ def temperature_suitability(value: float, opt_min: float, opt_max: float) -> flo
 
 
 def rainfall_suitability(value: float, opt_min: float, opt_max: float) -> float:
-    return _smooth_band_score(value, opt_min, opt_max)
+    if not math.isfinite(value) or opt_min is None or opt_max is None:
+        return 0.0
+    if opt_min <= value <= opt_max:
+        return 1.0
+    if value < opt_min:
+        gap = opt_min - value
+        span = max(opt_min, 10.0)
+        return clamp01(1.0 - gap / span)
+    else:
+        gap = value - opt_max
+        span = max(opt_max * 1.5, 50.0)
+        return clamp01(1.0 - gap / span)
 
 
 def humidity_suitability(value: float, opt_min: float = 35.0, opt_max: float = 80.0, temperature_c: float | None = None) -> float:
@@ -203,8 +214,10 @@ def calculate_crop_suitability_profile(
     rainfall_score = rainfall_suitability(rainfall_mm_30d, params.get("ideal_rainfall_min_mm_30d", 30.0), params.get("ideal_rainfall_max_mm_30d", 150.0))
     humidity_score = humidity_suitability(humidity_pct, 35.0, 80.0, temperature_c=temperature_c)
     ph_score = soil_ph_suitability(soil_ph, params.get("ideal_ph_min", 5.5), params.get("ideal_ph_max", 7.5))
-    nitrogen_target = max(10.0, float(params.get("fertilizer_n_kg_per_acre", 30.0)) * 0.8)
-    nitrogen_score = nitrogen_suitability(nitrogen_mg_kg, target_value=nitrogen_target, tolerance=max(12.0, nitrogen_target * 0.7))
+    fert_n_demand = float(params.get("fertilizer_n_kg_per_acre", 30.0))
+    nitrogen_target = 600.0 + (fert_n_demand * 12.0)
+    nitrogen_tolerance = 450.0 + (fert_n_demand * 4.0)
+    nitrogen_score = nitrogen_suitability(nitrogen_mg_kg, target_value=nitrogen_target, tolerance=nitrogen_tolerance)
     carbon_target = 18.0
     carbon_score = organic_carbon_suitability(organic_carbon_g_kg, target_value=carbon_target, tolerance=12.0)
     moisture_score = soil_moisture_suitability(soil_moisture_pct, 20.0, 50.0)

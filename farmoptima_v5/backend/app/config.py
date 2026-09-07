@@ -64,9 +64,11 @@ class Settings(BaseSettings):
     # existing configuration architecture.
     llm_api_key: str | None = None
 
-    # Model name to use.  Groq-compatible default uses the widely supported
-    # Llama 3.3 70B versatile model; the application remains configurable.
-    llm_model: str = "llama-3.3-70b-versatile"
+    # Model name to use.  Groq decommissioned llama-3.3-70b-versatile on
+    # 2026-08-16.  The default is now openai/gpt-oss-120b, which is the
+    # current general-purpose model available on the Groq API.
+    # To override, set LLM_MODEL in your .env file.
+    llm_model: str = "openai/gpt-oss-120b"
 
     # OpenAI-compatible base URL used by the provider transport.  Groq exposes
     # its chat completions API at https://api.groq.com/openai/v1.

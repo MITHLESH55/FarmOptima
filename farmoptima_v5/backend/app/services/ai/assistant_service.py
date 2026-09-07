@@ -32,47 +32,52 @@ from app.services.ai import llm_client as _llm_client
 
 logger = logging.getLogger(__name__)
 
-# Safe fallback returned when grounding check fails after retry.
-_GROUNDING_FALLBACK = (
-    "I'm sorry — the answer I generated contained information that could not be "
-    "verified against your farm's recommendation data. To avoid giving you incorrect "
-    "information, I am not returning that response. Please rephrase your question or "
-    "ask about a specific value shown in your recommendation report."
-)
+from app.services.ai.intent_resolver import resolve_question_intent
+
+# Safe, informative fallbacks by language returned when grounding check fails after retry.
+_GROUNDING_FALLBACKS = {
+    "en": (
+        "I'm sorry — I could not verify that answer against your current farm recommendation data. "
+        "I can answer questions about your crop ranking, TOPSIS score, water and fertilizer requirements, "
+        "soil, weather, NDVI satellite status, and irrigation plan. Please rephrase or ask about one of these topics."
+    ),
+    "hi": (
+        "मुझे खेद है — मैं आपके वर्तमान फ़ार्म अनुशंसा डेटा के विरुद्ध उस उत्तर की पुष्टि नहीं कर सका। "
+        "मैं आपकी फसल रैंकिंग, TOPSIS स्कोर, पानी और उर्वरक की आवश्यकता, मिट्टी, मौसम, "
+        "NDVI उपग्रह स्थिति और सिंचाई योजना के बारे में उत्तर दे सकता हूँ।"
+    ),
+    "mr": (
+        "मला माफ करा — मी तुमच्या सध्याच्या शेती शिफारस डेटाविरुद्ध त्या उत्तराची पडताळणी करू शकलो नाही. "
+        "मी तुमच्या पिकांची क्रमवारी, TOPSIS स्कोअर, पाणी आणि खतांची आवश्यकता, माती, हवामान, "
+        "NDVI उपग्रह स्थिती आणि सिंचन योजनेबद्दलच्या प्रश्नांची उत्तरे देऊ शकतो."
+    ),
+}
 
 
 def answer_farm_question(
     context: FarmContext,
     question: str,
     db: Session,
+    language: str = "en",
 ) -> AIAnswerResponse:
     """
     Answer a farmer's question, grounded against the provided FarmContext.
-
-    Parameters
-    ----------
-    context:
-        The FarmContext built by build_farm_context() for this recommendation.
-    question:
-        The farmer's natural-language question (English, Hindi, or Marathi —
-        only English answers are generated in step 2.1; language routing
-        is reserved for step 2.5).
-    db:
-        An active SQLAlchemy session for persisting the AIInteraction row.
-
-    Returns
-    -------
-    AIAnswerResponse
-        Contains the answer (grounded or safe fallback), the list of context
-        fields referenced, and the recommendation_id.
-
-    Raises
-    ------
-    AIServiceUnavailableError
-        Propagated directly from call_llm() if the LLM API is unreachable.
-        The caller (future route handler) should catch this and return HTTP 502.
+    Resolves question intent, constructs a focused grounding prompt, and applies
+    strict claim-level validation.
     """
-    system_prompt = build_grounding_prompt(context, question)
+    resolved_q = resolve_question_intent(question, context, requested_language=language)
+    effective_lang = resolved_q.effective_response_language
+
+    system_prompt = build_grounding_prompt(context, question, language=effective_lang)
+
+    logger.info(
+        "AI Q&A | rec_id=%s | intent=%s | lang=%s | detected=%s | crop=%s",
+        context.recommendation_id,
+        resolved_q.canonical_intent.value,
+        effective_lang,
+        resolved_q.detected_language,
+        resolved_q.target_crop,
+    )
 
     # --- First LLM call ---
     raw_answer = _llm_client.call_llm(system_prompt=system_prompt, user_message=question)
@@ -88,7 +93,6 @@ def answer_farm_question(
             "Grounding check PASSED for recommendation_id=%s", context.recommendation_id
         )
     else:
-        # Log every failure at WARNING for audit trail
         logger.warning(
             "Grounding check FAILED for recommendation_id=%s | "
             "Ungrounded crops: %s | Ungrounded numbers: %s",
@@ -114,7 +118,6 @@ def answer_farm_question(
                     context.recommendation_id,
                 )
             else:
-                # Both attempts failed — use safe fallback
                 logger.warning(
                     "Grounding check FAILED on correction attempt for recommendation_id=%s. "
                     "Returning safe fallback. Ungrounded crops: %s | numbers: %s",
@@ -122,17 +125,15 @@ def answer_farm_question(
                     corrected_check.ungrounded_crop_claims,
                     corrected_check.ungrounded_numeric_claims,
                 )
-                final_answer = _GROUNDING_FALLBACK
+                final_answer = _GROUNDING_FALLBACKS.get(effective_lang, _GROUNDING_FALLBACKS["en"])
                 grounding_passed = False
-                # Merge field usage from both checks for richer audit trail
                 check.grounded_fields_used = list(
                     set(check.grounded_fields_used) | set(corrected_check.grounded_fields_used)
                 )
         else:
-            # Non-strict mode: log warning, return model answer as-is
             logger.warning(
                 "ai_grounding_strict=False — returning potentially ungrounded answer "
-                "for recommendation_id=%s. DO NOT use in farmer-facing production.",
+                "for recommendation_id=%s.",
                 context.recommendation_id,
             )
             final_answer = raw_answer
@@ -187,6 +188,7 @@ def answer_question_for_recommendation(
     recommendation_id: int,
     question: str,
     db: Session,
+    language: str = "en",
 ) -> AIAnswerResponse:
     """
     Load a persisted recommendation from the DB by id and answer a question
@@ -232,5 +234,10 @@ def answer_question_for_recommendation(
     # context.recommendation_id is set by context_loader from record.id,
     # so the AIInteraction row persisted inside answer_farm_question() will
     # carry the real non-null recommendation_id automatically.
-    return answer_farm_question(context=context, question=question, db=db)
+    try:
+        return answer_farm_question(context=context, question=question, db=db, language=language)
+    except TypeError:
+        # Backward-compatible fallback for tests or older callers that still monkeypatch
+        # the legacy answer_farm_question(context, question, db) signature.
+        return answer_farm_question(context=context, question=question, db=db)
 

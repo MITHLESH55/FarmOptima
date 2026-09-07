@@ -117,6 +117,7 @@ def build_farm_context(recommendation: RecommendationResponse) -> FarmContext:
         irrigation_schedule=rp.irrigation_schedule,
         optimizer_method=rp.optimizer_method,
         pareto_front=pareto,
+        convergence_history=getattr(rp, "convergence_history", []),
     )
 
     return FarmContext(

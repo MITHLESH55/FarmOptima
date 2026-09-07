@@ -34,7 +34,12 @@ export default function ResourcePlanPanel({ data, locale }) {
   const generations = plan.optimizer_generations_run || 60;
   const bestFitness = plan.optimizer_best_fitness || 0.179;
 
-  // Prepare data for Pareto Front trade-off curve or fitness convergence line chart
+  // Prepare data for Pareto Front / Convergence trajectory chart
+  const convergencePoints = (plan.convergence_history || []).map((val, idx) => ({
+    gen: idx + 1,
+    cost: val,
+  }));
+
   const paretoPoints = (plan.pareto_front || []).map((pt, idx) => ({
     gen: idx + 1,
     water: Math.round(pt.water_liters_per_week / 7),
@@ -42,9 +47,10 @@ export default function ResourcePlanPanel({ data, locale }) {
     cost: pt.resource_cost || (pt.water_gap ** 2 + pt.fertilizer_gap ** 2) ** 0.5,
   }));
 
-  // If no pareto points array available, create synthetic convergence curve for visual sparkline
   const sparklineData =
-    paretoPoints.length > 0
+    convergencePoints.length > 0
+      ? convergencePoints
+      : paretoPoints.length > 0
       ? paretoPoints
       : Array.from({ length: 10 }, (_, i) => ({
           gen: (i + 1) * 6,
