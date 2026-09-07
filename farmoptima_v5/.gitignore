@@ -3,11 +3,6 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
 
 # Virtual environments
 .venv/
@@ -20,16 +15,15 @@ ENV/
 .env.*
 !.env.example
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Node / Frontend
+# Node
 node_modules/
-.npm/
-dist/
-build/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
@@ -45,7 +39,13 @@ Thumbs.db
 # Logs
 *.log
 
-# Generated / temporary files
+# Temporary files
 *.tmp
 *.temp
+
+# Local/debug outputs
 rec_response.json
+
+# Build/cache
+dist/
+build/
