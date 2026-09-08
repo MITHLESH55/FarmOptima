@@ -195,3 +195,51 @@ def test_unhandled_exception_returns_standard_error_envelope(client, monkeypatch
     body = resp.json()
     assert body["success"] is False
     assert body["error"]["code"] == "internal_error"
+
+
+def test_recommend_accepts_manual_decimal_coordinates(client, monkeypatch, auth_headers):
+    _patch_all_services(monkeypatch)
+    resp = client.post("/api/recommend", json={"lat": 18.3926, "lon": 73.8706}, headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["location"]["lat"] == 18.3926
+    assert body["location"]["lon"] == 73.8706
+    assert body["recommendation_status"] == "complete"
+
+
+def test_recommend_accepts_negative_coordinates(client, monkeypatch, auth_headers):
+    _patch_all_services(monkeypatch)
+    resp = client.post("/api/recommend", json={"lat": -18.3926, "lon": -73.8706}, headers=auth_headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["location"]["lat"] == -18.3926
+    assert body["location"]["lon"] == -73.8706
+
+
+def test_recommend_accepts_boundary_coordinates(client, monkeypatch, auth_headers):
+    _patch_all_services(monkeypatch)
+    # Latitude boundary: 90
+    resp_north = client.post("/api/recommend", json={"lat": 90.0, "lon": 45.0}, headers=auth_headers)
+    assert resp_north.status_code == 200
+
+    # Latitude boundary: -90
+    resp_south = client.post("/api/recommend", json={"lat": -90.0, "lon": 45.0}, headers=auth_headers)
+    assert resp_south.status_code == 200
+
+    # Longitude boundary: 180
+    resp_east = client.post("/api/recommend", json={"lat": 45.0, "lon": 180.0}, headers=auth_headers)
+    assert resp_east.status_code == 200
+
+    # Longitude boundary: -180
+    resp_west = client.post("/api/recommend", json={"lat": 45.0, "lon": -180.0}, headers=auth_headers)
+    assert resp_west.status_code == 200
+
+
+def test_recommend_rejects_out_of_range_longitude(client, monkeypatch, auth_headers):
+    _patch_all_services(monkeypatch)
+    resp = client.post("/api/recommend", json={"lat": 18.3926, "lon": 181.0}, headers=auth_headers)
+    assert resp.status_code == 422
+    body = resp.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "validation_error"
+

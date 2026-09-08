@@ -86,6 +86,8 @@ def handle_unexpected_error(request: Request, exc: Exception):
     return error_response(500, "internal_error", "An unexpected error occurred.")
 
 
+
+
 @app.get("/")
 def root():
     return {"status": "ok", "service": "FarmOptima API", "version": app.version}

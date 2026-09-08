@@ -26,6 +26,8 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 30, "ideal_rainfall_max_mm_30d": 100,
         "base_market_value_index": 6,
         "fertilizer_n_kg_per_acre": 48,
+        "fertilizer_p_kg_per_acre": 24,
+        "fertilizer_k_kg_per_acre": 16,
     },
     "Rice": {
         "water_need_mm_season": 1200,
@@ -34,6 +36,8 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 150, "ideal_rainfall_max_mm_30d": 300,
         "base_market_value_index": 7,
         "fertilizer_n_kg_per_acre": 55,
+        "fertilizer_p_kg_per_acre": 24,
+        "fertilizer_k_kg_per_acre": 20,
     },
     "Maize": {
         "water_need_mm_season": 550,
@@ -42,6 +46,8 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 60, "ideal_rainfall_max_mm_30d": 150,
         "base_market_value_index": 6,
         "fertilizer_n_kg_per_acre": 45,
+        "fertilizer_p_kg_per_acre": 24,
+        "fertilizer_k_kg_per_acre": 16,
     },
     "Groundnut": {
         "water_need_mm_season": 500,
@@ -50,6 +56,8 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 50, "ideal_rainfall_max_mm_30d": 125,
         "base_market_value_index": 7,
         "fertilizer_n_kg_per_acre": 20,
+        "fertilizer_p_kg_per_acre": 30,
+        "fertilizer_k_kg_per_acre": 20,
     },
     "Cotton": {
         "water_need_mm_season": 700,
@@ -58,6 +66,8 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 60, "ideal_rainfall_max_mm_30d": 110,
         "base_market_value_index": 8,
         "fertilizer_n_kg_per_acre": 60,
+        "fertilizer_p_kg_per_acre": 30,
+        "fertilizer_k_kg_per_acre": 30,
     },
     "Sugarcane": {
         "water_need_mm_season": 1800,
@@ -66,6 +76,8 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 100, "ideal_rainfall_max_mm_30d": 250,
         "base_market_value_index": 6,
         "fertilizer_n_kg_per_acre": 100,
+        "fertilizer_p_kg_per_acre": 40,
+        "fertilizer_k_kg_per_acre": 40,
     },
     "Soybean": {
         "water_need_mm_season": 500,
@@ -74,6 +86,8 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 60, "ideal_rainfall_max_mm_30d": 140,
         "base_market_value_index": 7,
         "fertilizer_n_kg_per_acre": 20,
+        "fertilizer_p_kg_per_acre": 30,
+        "fertilizer_k_kg_per_acre": 20,
     },
     "Chickpea": {
         "water_need_mm_season": 350,
@@ -82,5 +96,7 @@ CROP_DATABASE = {
         "ideal_rainfall_min_mm_30d": 20, "ideal_rainfall_max_mm_30d": 70,
         "base_market_value_index": 7,
         "fertilizer_n_kg_per_acre": 15,
+        "fertilizer_p_kg_per_acre": 25,
+        "fertilizer_k_kg_per_acre": 15,
     },
 }

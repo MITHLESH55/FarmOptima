@@ -1,34 +1,41 @@
 """
-Satellite service — NDVI computation from Sentinel-2 bands via Google Earth
-Engine (GEE).
+Satellite service — NDVI computation from Sentinel-2 bands via Google Earth Engine (GEE)
+with Data Provenance tracking and Field Polygon geometry support.
 
-NDVI math here is real: NDVI = (NIR - Red) / (NIR + Red), operating on
-actual band reflectance arrays. The GEE *retrieval* call requires you to
-have registered a Google Cloud project for Earth Engine access (see
-project README) — until GEE_PROJECT is configured in your environment,
-this service transparently falls back to a clearly-flagged synthetic mode
-so the rest of the pipeline can still be developed/demoed.
+NDVI formula: (NIR - Red) / (NIR + Red) applied to Copernicus Sentinel-2 Level-2A imagery.
 """
 
 from __future__ import annotations
 import hashlib
+import logging
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SatelliteResult:
     ndvi: float
-    source: str          # "gee-sentinel2" or "mock"
+    source: str  # "gee-sentinel2", "gee-cached", or "unavailable"
     scene_date: str | None
+    source_type: str = "SATELLITE_OBSERVATION"  # "SATELLITE_OBSERVATION", "CACHED_API", "MOCK/FALLBACK"
+    retrieved_at: str = ""
+    is_stale: bool = False
+    quality_status: str = "good"  # "good", "stale", "unavailable"
+
+    def __post_init__(self):
+        if not self.retrieved_at:
+            self.retrieved_at = datetime.now(timezone.utc).isoformat()
 
 
 def compute_ndvi(nir_band: "list[float] | any", red_band: "list[float] | any") -> float:
     """
     Real NDVI formula applied to arrays of NIR and Red reflectance values
-    (e.g. flattened Sentinel-2 B8 and B4 band pixel arrays for the field's
-    footprint). Returns the mean NDVI across all provided pixels.
+    (e.g. Sentinel-2 B8 and B4 band pixel arrays for the field's footprint).
     """
     import numpy as np
     nir = np.array(nir_band, dtype=float)
@@ -39,15 +46,13 @@ def compute_ndvi(nir_band: "list[float] | any", red_band: "list[float] | any") -
     return float(np.clip(ndvi_pixels, -1, 1).mean())
 
 
-def _fetch_via_gee(lat: float, lon: float) -> SatelliteResult | None:
+def _fetch_via_gee(lat: float, lon: float, polygon_geojson: dict[str, Any] | list[Any] | None = None) -> SatelliteResult | None:
     """
     Real Google Earth Engine retrieval path for Sentinel-2 NDVI.
     Query: COPERNICUS/S2_SR_HARMONIZED
     NDVI: (B8 - B4) / (B8 + B4)
+    Supports field boundary polygon geometry reduction when polygon_geojson is provided.
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
     if not settings.gee_project:
         logger.warning("GEE_PROJECT not configured in settings")
         return None
@@ -56,20 +61,31 @@ def _fetch_via_gee(lat: float, lon: float) -> SatelliteResult | None:
         import ee
         ee.Initialize(project=settings.gee_project)
 
-        point = ee.Geometry.Point([lon, lat])
+        # Build GEE geometry: Polygon if provided, or Point
+        if polygon_geojson and isinstance(polygon_geojson, (dict, list)):
+            try:
+                if isinstance(polygon_geojson, dict) and polygon_geojson.get("coordinates"):
+                    gee_geometry = ee.Geometry.Polygon(polygon_geojson.get("coordinates"))
+                elif isinstance(polygon_geojson, list):
+                    gee_geometry = ee.Geometry.Polygon(polygon_geojson)
+                else:
+                    gee_geometry = ee.Geometry.Point([lon, lat])
+            except Exception as e:
+                logger.warning("Error building GEE polygon geometry, falling back to point: %s", e)
+                gee_geometry = ee.Geometry.Point([lon, lat])
+        else:
+            gee_geometry = ee.Geometry.Point([lon, lat])
         
-        # Try configured lookback window first; if no scenes found, extend to 365 days
         start_date = settings.satellite_lookback_start
         end_date = settings.satellite_lookback_end
         
         collection = (
             ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-            .filterBounds(point)
+            .filterBounds(gee_geometry)
             .filterDate(start_date, end_date)
             .sort("CLOUDY_PIXEL_PERCENTAGE")
         )
         
-        # If collection is empty for 60-day window, fallback to 1-year lookback
         image = collection.first()
         try:
             image_id = image.get("system:id").getInfo()
@@ -78,127 +94,111 @@ def _fetch_via_gee(lat: float, lon: float) -> SatelliteResult | None:
                 fallback_start = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
                 collection = (
                     ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-                    .filterBounds(point)
+                    .filterBounds(gee_geometry)
                     .filterDate(fallback_start, end_date)
                     .sort("CLOUDY_PIXEL_PERCENTAGE")
                 )
                 image = collection.first()
-                image_id = image.get("system:id").getInfo()
         except Exception:
-            from datetime import date, timedelta
-            fallback_start = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
-            collection = (
-                ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-                .filterBounds(point)
-                .filterDate(fallback_start, end_date)
-                .sort("CLOUDY_PIXEL_PERCENTAGE")
-            )
-            image = collection.first()
+            pass
 
         if not image:
-            logger.warning(f"No Sentinel-2 image found for point ({lat}, {lon})")
+            logger.warning(f"No Sentinel-2 image found for ({lat}, {lon})")
             return None
 
         # Compute NDVI via normalizedDifference on B8 (NIR) and B4 (Red)
         ndvi_image = image.normalizedDifference(["B8", "B4"]).rename("NDVI")
         
-        # Compute mean NDVI across 1000m buffer footprint
+        # Reduce region over polygon or point buffer
+        target_region = gee_geometry if gee_geometry.type().getInfo() == "Polygon" else gee_geometry.buffer(1000)
+        
         stats = ndvi_image.reduceRegion(
             reducer=ee.Reducer.mean(),
-            geometry=point.buffer(1000),
+            geometry=target_region,
             scale=10,
             maxPixels=1e9
         )
         
         ndvi_value = stats.get("NDVI").getInfo()
-        if ndvi_value is None:
-            # Try 100m buffer if 1000m buffer returned None
+        if ndvi_value is None and gee_geometry.type().getInfo() != "Polygon":
             stats = ndvi_image.reduceRegion(
                 reducer=ee.Reducer.mean(),
-                geometry=point.buffer(100),
+                geometry=gee_geometry.buffer(100),
                 scale=10,
                 maxPixels=1e9
             )
             ndvi_value = stats.get("NDVI").getInfo()
 
         if ndvi_value is None:
-            logger.warning(f"NDVI mean reduction returned None for point ({lat}, {lon})")
+            logger.warning(f"NDVI mean reduction returned None for ({lat}, {lon})")
             return None
 
         scene_date = ee.Date(image.get("system:time_start")).format("YYYY-MM-dd").getInfo()
+        now_iso = datetime.now(timezone.utc).isoformat()
 
         return SatelliteResult(
             ndvi=round(float(ndvi_value), 3),
             source="gee-sentinel2",
-            scene_date=scene_date
+            source_type="SATELLITE_OBSERVATION",
+            scene_date=scene_date,
+            retrieved_at=now_iso,
+            is_stale=False,
+            quality_status="good",
         )
     except Exception as e:
-        logger.error(f"Error in _fetch_via_gee: {type(e).__name__}: {e}", exc_info=True)
+        logger.error(f"Error in _fetch_via_gee: {type(e).__name__}: {e}")
         return None
 
 
-def _mock_ndvi(lat: float, lon: float) -> SatelliteResult:
-    """
-    Deterministic (not random-per-call) synthetic NDVI, seeded from the
-    coordinates so the same location always yields the same mock value
-    during development without GEE access configured yet.
-    """
-    seed_str = f"{round(lat, 3)}:{round(lon, 3)}"
-    h = int(hashlib.sha256(seed_str.encode()).hexdigest(), 16)
-    ndvi = 0.2 + (h % 6000) / 10000.0  # spread across 0.2 - 0.8
-    return SatelliteResult(ndvi=round(ndvi, 3), source="mock", scene_date=None)
-
-
-def get_ndvi_for_location(lat: float, lon: float) -> SatelliteResult:
+def get_ndvi_for_location(
+    lat: float, lon: float, polygon_geojson: dict[str, Any] | list[Any] | None = None, db: any = None
+) -> SatelliteResult:
     """
     Get NDVI for a location from Sentinel-2 via Google Earth Engine.
     
     Returns:
-      - SatelliteResult with source="gee-sentinel2" if GEE API succeeds
-      - SatelliteResult with source="unavailable" if GEE is not configured or fails
-    
-    To enable: Set GEE_PROJECT environment variable and run 'earthengine authenticate'
+      - SatelliteResult with source_type="SATELLITE_OBSERVATION" if GEE API succeeds
+      - SatelliteResult with source_type="CACHED_API" and is_stale=True if last DB observation is used
+      - SatelliteResult with source_type="MOCK/FALLBACK" and source="unavailable" if GEE API fails and no cache exists
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    logger.info(f"[NDVI_DIAGNOSTIC] get_ndvi_for_location called: lat={lat}, lon={lon}, gee_project={settings.gee_project}")
-    
-    result = _fetch_via_gee(lat, lon)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    result = _fetch_via_gee(lat, lon, polygon_geojson=polygon_geojson)
     if result is not None:
-        logger.info(f"[NDVI_DIAGNOSTIC] GEE fetch succeeded: {result}")
         return result
     
-    # GEE not configured or failed — return unavailable marker
-    if not settings.gee_project:
-        logger.warning("[NDVI_DIAGNOSTIC] GEE_PROJECT not set in .env — Earth Engine integration unavailable")
-    else:
-        logger.warning(f"[NDVI_DIAGNOSTIC] Earth Engine request failed for ({lat}, {lon}) — check authentication")
-    
-    unavailable_result = SatelliteResult(ndvi=0.0, source="unavailable", scene_date=None)
-    logger.info(f"[NDVI_DIAGNOSTIC] Returning unavailable result: {unavailable_result}")
-    return unavailable_result
+    # Check DB cache for last stored observation
+    if db is not None:
+        try:
+            from app.models.recommendation import Recommendation
+            cached_rec = db.query(Recommendation).filter(
+                (Recommendation.latitude == lat) & (Recommendation.longitude == lon)
+            ).order_by(Recommendation.id.desc()).first()
+            if cached_rec and cached_rec.ndvi is not None and cached_rec.ndvi > 0:
+                logger.info("Preserving last valid cached satellite observation for (%.4f, %.4f)", lat, lon)
+                return SatelliteResult(
+                    ndvi=cached_rec.ndvi,
+                    source="gee-cached",
+                    source_type="CACHED_API",
+                    scene_date=cached_rec.satellite_scene_date,
+                    retrieved_at=now_iso,
+                    is_stale=True,
+                    quality_status="stale",
+                )
+        except Exception as e:
+            logger.warning("Error querying cached satellite reading: %s", e)
+
+    # GEE not configured or failed & no cache — return explicit unavailable marker
+    return SatelliteResult(
+        ndvi=0.0,
+        source="unavailable",
+        source_type="MOCK/FALLBACK",
+        scene_date=None,
+        retrieved_at=now_iso,
+        is_stale=True,
+        quality_status="unavailable",
+    )
 
 
 def get_satellite_map_url(lat: float, lon: float, zoom: int = 12) -> str:
-    """
-    Generate a satellite map URL for displaying the location.
-    Uses public tile services (Sentinel-2 tiles or OSM Satellite).
-    
-    Returns a Leaflet-compatible tile URL that can be used in frontend mapping.
-    For production, consider:
-    - Google Maps Static API (requires API key)
-    - Mapbox Static API (requires API key)
-    - USGS LandSat public tiles
-    - Copernicus Sentinel-2 public tiles
-    """
-    # Use USGS Sentinel-2 public tiles (level-2A, 10m resolution)
-    # These tiles are freely available and don't require API keys
-    # Tile service: https://sentinel.ga.gov.au/
-    # Alternative: https://tiles.sentinel-hub.com/
-    
-    # For now, return a URL to display satellite imagery via a public tile service
-    # This returns a Leaflet tile URL pattern that can be embedded in a frontend map
-    url = f"https://tiles.sentinel-hub.com/wms/{{z}}/{{x}}/{{y}}?layers=TRUE_COLOR&showlogo=false"
-    return url
-
+    """Generate Leaflet satellite tile URL for displaying imagery."""
+    return f"https://tiles.sentinel-hub.com/wms/{{z}}/{{x}}/{{y}}?layers=TRUE_COLOR&showlogo=false"

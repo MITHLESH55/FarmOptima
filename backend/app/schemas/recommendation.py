@@ -38,6 +38,40 @@ class DataCompleteness(BaseModel):
     market: str   # "csv" or "fallback-index"
 
 
+class NutrientRequirements(BaseModel):
+    nitrogen_kg_per_acre: float
+    phosphorus_kg_per_acre: float
+    potassium_kg_per_acre: float
+    total_field_nitrogen_kg: float
+    total_field_phosphorus_kg: float
+    total_field_potassium_kg: float
+
+
+class CommercialFertilizerItem(BaseModel):
+    name: str
+    composition: str
+    quantity_kg_per_acre: float
+    quantity_kg_total: float
+    application_stage: str
+
+
+class ApplicationStageItem(BaseModel):
+    stage: str
+    dap_kg: float
+    urea_kg: float
+    mop_kg: float
+    total_kg: float
+
+
+class FertilizerPlan(BaseModel):
+    crop: str
+    field_area_acres: float
+    nutrient_requirements: NutrientRequirements
+    commercial_fertilizers: list[CommercialFertilizerItem]
+    application_schedule: list[ApplicationStageItem]
+    explanation: str
+
+
 class RecommendationResponse(BaseModel):
     id: int | None = None  # DB row id, once persisted
     location: LocationRequest
@@ -100,5 +134,6 @@ class RecommendationResponse(BaseModel):
     top_crop_reference_ranges: dict[str, dict[str, float]] | None = None
     crop_ranking: list[CropScore]
     resource_plan: ResourcePlan
+    fertilizer_plan: FertilizerPlan | None = None
     ai_explanation: str
 

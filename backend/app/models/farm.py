@@ -1,6 +1,4 @@
-"""Farm — a saved location the user has queried before."""
-
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, JSON
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -13,4 +11,8 @@ class Farm(Base):
     name = Column(String(120), nullable=True)
     latitude = Column(Float, nullable=False, index=True)
     longitude = Column(Float, nullable=False, index=True)
+    polygon_geojson = Column(JSON, nullable=True)
+    field_area_acres = Column(Float, nullable=True, default=1.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+

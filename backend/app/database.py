@@ -33,33 +33,28 @@ def get_db():
         db.close()
 
 
-def _ensure_farms_user_id_column(conn) -> None:
-    """Idempotent Phase 2.3A migration: add user_id to farms if absent.
+def _ensure_farms_columns(conn) -> None:
+    """SQLite-safe migration for older farms tables.
 
-    Inspects the actual schema using PRAGMA table_info before attempting
-    ALTER TABLE. This avoids:
-    - Swallowing unrelated database errors.
-    - Duplicate-column errors on subsequent startups.
-    - Any assumption about the column's presence.
-
-    SQLite ADD COLUMN restrictions mean the new column must be nullable
-    (which matches our design: legacy rows have NULL ownership).
+    Fresh installs get the current schema from `create_all`, but legacy DBs can
+    still exist from earlier app versions with a partial or stale table. The app
+    should upgrade those tables in place instead of crashing on query/insert.
     """
-    from sqlalchemy import text
+    from sqlalchemy.dialects import sqlite
+    from app.models.farm import Farm
 
-    # PRAGMA table_info returns one row per column: (cid, name, type, ...)
     result = conn.execute(text("PRAGMA table_info(farms)"))
     existing_columns = {row[1] for row in result}
 
-    if "user_id" not in existing_columns:
-        import logging
-        logging.getLogger("farmoptima").info(
-            "Migration: adding user_id column to farms table (Phase 2.3A)."
-        )
-        conn.execute(
-            text("ALTER TABLE farms ADD COLUMN user_id INTEGER REFERENCES users(id)")
-        )
-        conn.commit()
+    for column in Farm.__table__.columns:
+        if column.name in existing_columns:
+            continue
+
+        column_sql = column.type.compile(dialect=sqlite.dialect())
+        sql = f"ALTER TABLE farms ADD COLUMN {column.name} {column_sql}"
+        conn.execute(text(sql))
+
+    conn.commit()
 
 
 def _ensure_recommendation_columns(conn) -> None:
@@ -96,6 +91,7 @@ def init_db():
     # Only silences the case where farms doesn't exist yet (fresh DB where
     # create_all just ran and the column will be present from the model).
     with engine.connect() as conn:
-        _ensure_farms_user_id_column(conn)
+        _ensure_farms_columns(conn)
         _ensure_recommendation_columns(conn)
+
 

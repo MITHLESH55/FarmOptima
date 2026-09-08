@@ -180,7 +180,7 @@ export default function App() {
 
       if (!res.ok) {
         const responseData = await res.json();
-        const detail = responseData.error?.detail || responseData.detail || "Request failed";
+        const detail = responseData.error?.message || responseData.error?.detail || responseData.detail || "Request failed";
         throw new Error(detail);
       }
 

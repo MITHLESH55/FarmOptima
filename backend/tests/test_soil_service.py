@@ -49,8 +49,8 @@ def test_soilgrids_unit_conversion_and_retries():
         assert res.organic_carbon_g_kg == 18.0
 
 
-def test_soilgrids_failure_returns_reference_status():
-    """Verify that when SoilGrids fails, get_soil_for_location returns source='soilgrids-reference' with valid calibrated parameters."""
+def test_soilgrids_failure_returns_unavailable_status():
+    """Verify that when SoilGrids fails and no DB cache exists, get_soil_for_location returns explicit unavailable marker without fake data."""
     mock_resp = MagicMock()
     mock_resp.ok = False
     mock_resp.status_code = 500
@@ -58,8 +58,10 @@ def test_soilgrids_failure_returns_reference_status():
 
     with patch("requests.get", return_value=mock_resp):
         res = get_soil_for_location(15.9016, 75.9837)
-        assert res.source == "soilgrids-reference"
-        assert res.ph > 0.0
-        assert res.nitrogen_total_mg_kg > 0.0
-        assert res.organic_carbon_g_kg > 0.0
+        assert res.source == "unavailable"
+        assert res.source_type == "MOCK/FALLBACK"
+        assert res.quality_status == "unavailable"
+        assert res.ph == 0.0
+        assert res.nitrogen_total_mg_kg == 0.0
+
 
