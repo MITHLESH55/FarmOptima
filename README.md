@@ -888,11 +888,6 @@ Dedicated tests exist for data foundation, MCDM integrity, fertilizer calculatio
 
 ---
 
-## Author
-
-**Mithlesh Yadav**
-Computer Science / Software Development
-GitHub: [github.com/MITHLESH55/FarmOptima](https://github.com/MITHLESH55/FarmOptima)
 
 ---
 
