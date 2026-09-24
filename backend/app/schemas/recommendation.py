@@ -83,7 +83,7 @@ class RecommendationResponse(BaseModel):
     recommendation_status: str = "complete"  # "complete" | "partial" | "unavailable"
     partial_data_reason: str | None = None
 
-    ndvi: float
+    ndvi: float | None = None
     ndvi_status: str | None = None
     satellite_scene_date: str | None  # Scene acquisition date from Sentinel-2
     satellite_tile_url: str | None = None  # Tile URL for satellite visualization
@@ -94,20 +94,19 @@ class RecommendationResponse(BaseModel):
         if update:
             data.update(update)
 
-        if data.get("ndvi") is not None:
-            from app.core.environmental_interpretation import interpret_ndvi
-
-            data["ndvi_status"] = interpret_ndvi(float(data["ndvi"]))
+        from app.core.environmental_interpretation import interpret_ndvi
+        ndvi_val = data.get("ndvi")
+        data["ndvi_status"] = interpret_ndvi(float(ndvi_val) if ndvi_val is not None else None)
 
         return self.__class__.model_validate(data)
 
     @model_validator(mode="before")
     @classmethod
     def _backfill_legacy_ndvi_status(cls, values):
-        if isinstance(values, dict) and values.get("ndvi") is not None:
+        if isinstance(values, dict):
             from app.core.environmental_interpretation import interpret_ndvi
-
-            expected_status = interpret_ndvi(float(values["ndvi"]))
+            ndvi_val = values.get("ndvi")
+            expected_status = interpret_ndvi(float(ndvi_val) if ndvi_val is not None else None)
             values["ndvi_status"] = expected_status
         return values
     

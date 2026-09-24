@@ -112,12 +112,17 @@ def soil_moisture_suitability(value: float, opt_min: float = 20.0, opt_max: floa
     return _smooth_band_score(value, opt_min, opt_max)
 
 
-def vegetation_suitability(value: float, opt_min: float = 0.45, opt_max: float = 0.75) -> float:
+def vegetation_suitability(value: float | None, opt_min: float = 0.45, opt_max: float = 0.75) -> float:
+    if value is None or not math.isfinite(value):
+        return 0.5
     return _smooth_band_score(value, opt_min, opt_max)
 
 
 def market_suitability(value: float, opt_min: float = 1.0, opt_max: float = 10.0) -> float:
-    return _smooth_band_score(value, opt_min, opt_max)
+    """Normalized market index score. Higher market value index (1-10) yields higher suitability score in [0, 1]."""
+    if not math.isfinite(value):
+        return 0.5
+    return clamp01((value - 1.0) / 9.0)
 
 
 def _vapour_pressure_deficit_kpa(temperature_c: float, relative_humidity_pct: float) -> float:
@@ -160,24 +165,20 @@ def crop_water_requirement_mm_period(eto_mm_day: float, kc_mid: float, growth_st
 
 
 def water_efficiency_suitability(rainfall_mm_30d: float, crop_water_need_mm: float, *, et0_mm_day: float | None = None, kc: float = 1.0) -> float:
-    """Water adequacy score relative to crop water demand.
+    """Water adequacy score relative to 30-day crop water demand.
 
-    The score balances current rainfall against the crop's approximate seasonal
-    demand. If a crop requires substantial water, a rainfall amount that is
-    proportionally low will reduce the suitability smoothly. This is not a
-    binary irrigation/no-irrigation rule; it is a normalized adequacy signal.
+    The 120-day seasonal water demand is converted to a 30-day requirement (seasonal / 4)
+    and compared against recent 30-day rainfall.
     """
     if not math.isfinite(rainfall_mm_30d) or not math.isfinite(crop_water_need_mm):
         return 0.0
-    demand = max(crop_water_need_mm, 1.0)
-    ratio = rainfall_mm_30d / demand
-    # Reasonable agronomic balance: around 0.75-1.2 of the crop demand gives a
-    # strong water adequacy score; values below/above this taper smoothly.
-    if 0.7 <= ratio <= 1.2:
+    monthly_demand = max(crop_water_need_mm / 4.0, 1.0)
+    ratio = rainfall_mm_30d / monthly_demand
+    if 0.7 <= ratio <= 1.3:
         return 1.0
     if ratio < 0.7:
         return clamp01(1.0 - ((0.7 - ratio) / 0.7))
-    return clamp01(1.0 - ((ratio - 1.2) / 1.2))
+    return clamp01(1.0 - ((ratio - 1.3) / 1.5))
 
 
 def calculate_crop_suitability_profile(
@@ -190,7 +191,7 @@ def calculate_crop_suitability_profile(
     nitrogen_mg_kg: float,
     organic_carbon_g_kg: float,
     soil_moisture_pct: float,
-    ndvi: float,
+    ndvi: float | None = None,
     market_value_index: float = 5.0,
     crop_params: dict | None = None,
 ) -> dict[str, float]:
@@ -204,7 +205,7 @@ def calculate_crop_suitability_profile(
             "nitrogen_suitability": 0.0,
             "organic_carbon_suitability": 0.0,
             "soil_moisture_suitability": 0.0,
-            "vegetation_suitability": 0.0,
+            "vegetation_suitability": 0.5,
             "water_suitability": 0.0,
             "market_suitability": 0.0,
             "overall_environmental_score": 0.0,
@@ -215,11 +216,11 @@ def calculate_crop_suitability_profile(
     humidity_score = humidity_suitability(humidity_pct, 35.0, 80.0, temperature_c=temperature_c)
     ph_score = soil_ph_suitability(soil_ph, params.get("ideal_ph_min", 5.5), params.get("ideal_ph_max", 7.5))
     fert_n_demand = float(params.get("fertilizer_n_kg_per_acre", 30.0))
-    nitrogen_target = 600.0 + (fert_n_demand * 12.0)
-    nitrogen_tolerance = 450.0 + (fert_n_demand * 4.0)
+    nitrogen_target = 400.0 + (fert_n_demand * 15.0)
+    nitrogen_tolerance = 250.0 + (fert_n_demand * 3.0)
     nitrogen_score = nitrogen_suitability(nitrogen_mg_kg, target_value=nitrogen_target, tolerance=nitrogen_tolerance)
     carbon_target = 18.0
-    carbon_score = organic_carbon_suitability(organic_carbon_g_kg, target_value=carbon_target, tolerance=12.0)
+    carbon_score = organic_carbon_suitability(organic_carbon_g_kg, target_value=carbon_target, tolerance=10.0)
     moisture_score = soil_moisture_suitability(soil_moisture_pct, 20.0, 50.0)
     vegetation_score = vegetation_suitability(ndvi, 0.4, 0.75)
     water_score = water_efficiency_suitability(rainfall_mm_30d, float(params.get("water_need_mm_season", 500.0)))

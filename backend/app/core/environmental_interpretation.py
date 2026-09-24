@@ -15,8 +15,13 @@ remote-sensing monitoring workflows and is not invented for this app.
 from __future__ import annotations
 
 
-def interpret_ndvi(value: float) -> str:
+import math
+
+
+def interpret_ndvi(value: float | None) -> str:
     """Return a deterministic NDVI vegetation-health label for a numeric value."""
+    if value is None or not math.isfinite(value):
+        return "unavailable"
     if value < 0:
         return "water / non-vegetated surface"
     if value < 0.1:
@@ -28,3 +33,27 @@ def interpret_ndvi(value: float) -> str:
     if value < 0.6:
         return "dense vegetation"
     return "very dense vegetation"
+
+
+def interpret_factor_range(
+    value: float | None,
+    opt_min: float | None = None,
+    opt_max: float | None = None,
+) -> str:
+    """Deterministic, single source of truth for environmental factor status relative to crop reference."""
+    if value is None or not math.isfinite(value):
+        return "unavailable"
+    if opt_min is None and opt_max is None:
+        return "no_reference_configured"
+    if opt_min is not None and opt_max is not None:
+        if opt_min <= value <= opt_max:
+            return "within_preferred_range"
+        if value < opt_min:
+            return "below_preferred_range"
+        return "above_preferred_range"
+    if opt_min is not None:
+        return "within_preferred_range" if value >= opt_min else "below_preferred_range"
+    if opt_max is not None:
+        return "within_preferred_range" if value <= opt_max else "above_preferred_range"
+    return "within_preferred_range"
+

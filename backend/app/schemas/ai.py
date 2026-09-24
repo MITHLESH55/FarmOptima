@@ -170,6 +170,10 @@ class FarmContext(BaseModel):
     # --- Resource plan ---
     resource_plan: ResourcePlanContext
 
+    # --- Structured Fertilizer Plan & Top Crop Reference Ranges ---
+    fertilizer_plan: dict | None = None
+    top_crop_reference_ranges: dict[str, dict[str, float]] | None = None
+
     # --- Existing template explanation (pass-through) ---
     ai_explanation: str
 

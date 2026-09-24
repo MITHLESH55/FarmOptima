@@ -62,8 +62,8 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const resData = await res.json();
-        throw new Error(resData.error?.detail || t("auth.loginFailed", locale));
+        const resData = await res.json().catch(() => ({}));
+        throw new Error(resData.error?.message || resData.error?.detail || resData.detail || t("auth.loginFailed", locale));
       }
 
       const resData = await res.json();
@@ -108,8 +108,8 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const resData = await res.json();
-        throw new Error(resData.error?.detail || t("auth.registrationFailed", locale));
+        const resData = await res.json().catch(() => ({}));
+        throw new Error(resData.error?.message || resData.error?.detail || resData.detail || t("auth.registrationFailed", locale));
       }
 
       setAuthError(null);

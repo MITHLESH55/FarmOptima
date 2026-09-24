@@ -1,0 +1,583 @@
+{
+  "metadata": {
+    "title": "FarmOptima Optimization Comparison Experiment",
+    "date": "2026-09-24",
+    "algorithms": [
+      "Single-Objective GPO Baseline",
+      "Multi-Objective NSGA-II"
+    ],
+    "population_size": 40,
+    "generations": 60,
+    "seed": 42,
+    "num_crops_evaluated": 8
+  },
+  "aggregate_metrics": {
+    "avg_gpo_runtime_ms": 10.83,
+    "avg_nsga2_runtime_ms": 631.43,
+    "avg_pareto_front_size": 40.0,
+    "avg_nsga2_water_gap": 0.802,
+    "avg_nsga2_fertilizer_gap": 0.1315
+  },
+  "crop_evaluations": [
+    {
+      "crop": "Rice",
+      "crop_demands": {
+        "water_need_mm": 1200.0,
+        "fertilizer_need_kg_acre": 55.0,
+        "rainfall_mm_30d": 80.0,
+        "soil_moisture_pct": 45.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000.0,
+        "fertilizer_kg_per_acre": 55.0,
+        "water_gap": 0.7668,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 849.0,
+        "scalar_fitness": 0.7673,
+        "runtime_ms": 11.13
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 1173.4,
+        "fertilizer_kg_per_acre": 49.4,
+        "water_gap": 0.7728,
+        "fertilizer_gap": 0.1025,
+        "resource_cost_inr": 2172.78,
+        "pareto_compromise_gap": 0.7796,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 634.21,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 45.2,
+            "water_gap": 0.7668,
+            "fertilizer_gap": 0.178,
+            "resource_cost": 3530.26
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.776,
+            "fertilizer_gap": 0.9091,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 2984.3,
+            "fertilizer_kg_per_acre": 55.0,
+            "water_gap": 0.7668,
+            "fertilizer_gap": 0.0001,
+            "resource_cost": 3762.61
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 55.0,
+            "water_gap": 0.7668,
+            "fertilizer_gap": 0.0001,
+            "resource_cost": 3775.2
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.776,
+            "fertilizer_gap": 0.9091,
+            "resource_cost": 285.0
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -0.78,
+        "fertilizer_precision_change_pct": -102470.0,
+        "cost_delta_inr": 1323.78
+      }
+    },
+    {
+      "crop": "Wheat",
+      "crop_demands": {
+        "water_need_mm": 450.0,
+        "fertilizer_need_kg_acre": 48.0,
+        "rainfall_mm_30d": 25.0,
+        "soil_moisture_pct": 30.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000,
+        "fertilizer_kg_per_acre": 48.0,
+        "water_gap": 0.8025,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 744.0,
+        "scalar_fitness": 0.804,
+        "runtime_ms": 10.29
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 1525.3,
+        "fertilizer_kg_per_acre": 37.8,
+        "water_gap": 0.8155,
+        "fertilizer_gap": 0.2135,
+        "resource_cost_inr": 2164.06,
+        "pareto_compromise_gap": 0.843,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 629.78,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 45.7,
+            "water_gap": 0.8025,
+            "fertilizer_gap": 0.0482,
+            "resource_cost": 3542.14
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.8271,
+            "fertilizer_gap": 0.8958,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 1063.4,
+            "fertilizer_kg_per_acre": 48.0,
+            "water_gap": 0.8196,
+            "fertilizer_gap": 0.0,
+            "resource_cost": 2050.68
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 48.0,
+            "water_gap": 0.8025,
+            "fertilizer_gap": 0.0004,
+            "resource_cost": 3599.57
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.8271,
+            "fertilizer_gap": 0.8958,
+            "resource_cost": 285.0
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -1.61,
+        "fertilizer_precision_change_pct": -213500.0,
+        "cost_delta_inr": 1420.06
+      }
+    },
+    {
+      "crop": "Cotton",
+      "crop_demands": {
+        "water_need_mm": 700.0,
+        "fertilizer_need_kg_acre": 60.0,
+        "rainfall_mm_30d": 45.0,
+        "soil_moisture_pct": 25.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000,
+        "fertilizer_kg_per_acre": 60.0,
+        "water_gap": 0.8045,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 924.0,
+        "scalar_fitness": 0.8054,
+        "runtime_ms": 10.36
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 1803.0,
+        "fertilizer_kg_per_acre": 47.4,
+        "water_gap": 0.8112,
+        "fertilizer_gap": 0.2098,
+        "resource_cost_inr": 2627.79,
+        "pareto_compromise_gap": 0.8379,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 626.21,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.8203,
+            "fertilizer_gap": 0.9167,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 59.3,
+            "water_gap": 0.8045,
+            "fertilizer_gap": 0.0123,
+            "resource_cost": 3881.53
+          },
+          {
+            "water_liters_per_week": 1074.6,
+            "fertilizer_kg_per_acre": 60.0,
+            "water_gap": 0.8154,
+            "fertilizer_gap": 0.0,
+            "resource_cost": 2359.73
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 60.1,
+            "water_gap": 0.8045,
+            "fertilizer_gap": 0.0015,
+            "resource_cost": 3902.24
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.8203,
+            "fertilizer_gap": 0.9167,
+            "resource_cost": 285.0
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -0.84,
+        "fertilizer_precision_change_pct": -209760.0,
+        "cost_delta_inr": 1703.79
+      }
+    },
+    {
+      "crop": "Sugarcane",
+      "crop_demands": {
+        "water_need_mm": 1800.0,
+        "fertilizer_need_kg_acre": 100.0,
+        "rainfall_mm_30d": 60.0,
+        "soil_moisture_pct": 35.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000,
+        "fertilizer_kg_per_acre": 100.0,
+        "water_gap": 0.8567,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 1524.0,
+        "scalar_fitness": 0.8571,
+        "runtime_ms": 10.03
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 2025.7,
+        "fertilizer_kg_per_acre": 79.0,
+        "water_gap": 0.8589,
+        "fertilizer_gap": 0.2097,
+        "resource_cost_inr": 3596.2,
+        "pareto_compromise_gap": 0.8841,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 634.41,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 57.1,
+            "water_gap": 0.8567,
+            "fertilizer_gap": 0.4286,
+            "resource_cost": 3828.39
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.8629,
+            "fertilizer_gap": 0.95,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 100.0,
+            "water_gap": 0.8567,
+            "fertilizer_gap": 0.0003,
+            "resource_cost": 4900.84
+          },
+          {
+            "water_liters_per_week": 2802.4,
+            "fertilizer_kg_per_acre": 100.0,
+            "water_gap": 0.8572,
+            "fertilizer_gap": 0.0,
+            "resource_cost": 4741.99
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.8629,
+            "fertilizer_gap": 0.95,
+            "resource_cost": 285.0
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -0.25,
+        "fertilizer_precision_change_pct": -209730.0,
+        "cost_delta_inr": 2072.2
+      }
+    },
+    {
+      "crop": "Chickpea",
+      "crop_demands": {
+        "water_need_mm": 350.0,
+        "fertilizer_need_kg_acre": 15.0,
+        "rainfall_mm_30d": 15.0,
+        "soil_moisture_pct": 20.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000.0,
+        "fertilizer_kg_per_acre": 15.0,
+        "water_gap": 0.8404,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 249.0,
+        "scalar_fitness": 0.8422,
+        "runtime_ms": 10.83
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 1280.2,
+        "fertilizer_kg_per_acre": 14.2,
+        "water_gap": 0.8598,
+        "fertilizer_gap": 0.0508,
+        "resource_cost_inr": 1380.14,
+        "pareto_compromise_gap": 0.8613,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 642.31,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 2698.1,
+            "fertilizer_kg_per_acre": 15.0,
+            "water_gap": 0.8438,
+            "fertilizer_gap": 0.0001,
+            "resource_cost": 2533.43
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 12.0,
+            "water_gap": 0.8404,
+            "fertilizer_gap": 0.1974,
+            "resource_cost": 2700.98
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.872,
+            "fertilizer_gap": 0.6667,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 15.0,
+            "water_gap": 0.8404,
+            "fertilizer_gap": 0.0005,
+            "resource_cost": 2774.81
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.872,
+            "fertilizer_gap": 0.6667,
+            "resource_cost": 285.0
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -2.31,
+        "fertilizer_precision_change_pct": -50800.0,
+        "cost_delta_inr": 1131.14
+      }
+    },
+    {
+      "crop": "Maize",
+      "crop_demands": {
+        "water_need_mm": 550.0,
+        "fertilizer_need_kg_acre": 45.0,
+        "rainfall_mm_30d": 50.0,
+        "soil_moisture_pct": 28.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000,
+        "fertilizer_kg_per_acre": 45.0,
+        "water_gap": 0.7406,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 699.0,
+        "scalar_fitness": 0.7417,
+        "runtime_ms": 11.83
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 1824.1,
+        "fertilizer_kg_per_acre": 40.2,
+        "water_gap": 0.7491,
+        "fertilizer_gap": 0.1056,
+        "resource_cost_inr": 2465.54,
+        "pareto_compromise_gap": 0.7565,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 630.22,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 37.5,
+            "water_gap": 0.7406,
+            "fertilizer_gap": 0.1669,
+            "resource_cost": 3337.19
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.7607,
+            "fertilizer_gap": 0.8889,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 45.0,
+            "water_gap": 0.7406,
+            "fertilizer_gap": 0.0,
+            "resource_cost": 3525.03
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.7607,
+            "fertilizer_gap": 0.8889,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5.9,
+            "water_gap": 0.7607,
+            "fertilizer_gap": 0.8692,
+            "resource_cost": 307.1
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -1.14,
+        "fertilizer_precision_change_pct": -105560.0,
+        "cost_delta_inr": 1766.54
+      }
+    },
+    {
+      "crop": "Groundnut",
+      "crop_demands": {
+        "water_need_mm": 500.0,
+        "fertilizer_need_kg_acre": 20.0,
+        "rainfall_mm_30d": 35.0,
+        "soil_moisture_pct": 30.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000,
+        "fertilizer_kg_per_acre": 20.0,
+        "water_gap": 0.7763,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 324.0,
+        "scalar_fitness": 0.7775,
+        "runtime_ms": 10.54
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 1745.7,
+        "fertilizer_kg_per_acre": 18.4,
+        "water_gap": 0.7862,
+        "fertilizer_gap": 0.0799,
+        "resource_cost_inr": 1856.63,
+        "pareto_compromise_gap": 0.7902,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 632.8,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 11.9,
+            "water_gap": 0.7763,
+            "fertilizer_gap": 0.4035,
+            "resource_cost": 2698.27
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.7984,
+            "fertilizer_gap": 0.75,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 1492.1,
+            "fertilizer_kg_per_acre": 20.0,
+            "water_gap": 0.7882,
+            "fertilizer_gap": 0.0001,
+            "resource_cost": 1693.6
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 20.0,
+            "water_gap": 0.7763,
+            "fertilizer_gap": 0.0017,
+            "resource_cost": 2899.13
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.7984,
+            "fertilizer_gap": 0.75,
+            "resource_cost": 285.0
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -1.28,
+        "fertilizer_precision_change_pct": -79880.0,
+        "cost_delta_inr": 1532.63
+      }
+    },
+    {
+      "crop": "Soybean",
+      "crop_demands": {
+        "water_need_mm": 500.0,
+        "fertilizer_need_kg_acre": 20.0,
+        "rainfall_mm_30d": 40.0,
+        "soil_moisture_pct": 32.0
+      },
+      "gpo_baseline": {
+        "water_liters_per_week": 3000,
+        "fertilizer_kg_per_acre": 20.0,
+        "water_gap": 0.7523,
+        "fertilizer_gap": 0.0,
+        "resource_cost_inr": 324.0,
+        "scalar_fitness": 0.7535,
+        "runtime_ms": 11.66
+      },
+      "nsga2_multiobjective": {
+        "water_liters_per_week": 1745.7,
+        "fertilizer_kg_per_acre": 18.4,
+        "water_gap": 0.7622,
+        "fertilizer_gap": 0.0799,
+        "resource_cost_inr": 1856.63,
+        "pareto_compromise_gap": 0.7664,
+        "pareto_solutions_count": 40,
+        "runtime_ms": 621.49,
+        "pareto_front_sample": [
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 11.9,
+            "water_gap": 0.7523,
+            "fertilizer_gap": 0.4035,
+            "resource_cost": 2698.27
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.7744,
+            "fertilizer_gap": 0.75,
+            "resource_cost": 285.0
+          },
+          {
+            "water_liters_per_week": 1492.1,
+            "fertilizer_kg_per_acre": 20.0,
+            "water_gap": 0.7642,
+            "fertilizer_gap": 0.0001,
+            "resource_cost": 1693.6
+          },
+          {
+            "water_liters_per_week": 3000,
+            "fertilizer_kg_per_acre": 20.0,
+            "water_gap": 0.7523,
+            "fertilizer_gap": 0.0017,
+            "resource_cost": 2899.13
+          },
+          {
+            "water_liters_per_week": 200,
+            "fertilizer_kg_per_acre": 5,
+            "water_gap": 0.7744,
+            "fertilizer_gap": 0.75,
+            "resource_cost": 285.0
+          }
+        ]
+      },
+      "relative_improvements": {
+        "water_precision_change_pct": -1.32,
+        "fertilizer_precision_change_pct": -79880.0,
+        "cost_delta_inr": 1532.63
+      }
+    }
+  ]
+}

@@ -265,7 +265,7 @@ def test_api_failure_does_not_generate_fake_values():
         sat_res = get_ndvi_for_location(28.6139, 77.2090)
         assert sat_res.source == "unavailable"
         assert sat_res.source_type == "MOCK/FALLBACK"
-        assert sat_res.ndvi == 0.0
+        assert sat_res.ndvi is None
         assert sat_res.quality_status == "unavailable"
 
 

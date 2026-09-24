@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SatelliteResult:
-    ndvi: float
+    ndvi: float | None
     source: str  # "gee-sentinel2", "gee-cached", or "unavailable"
     scene_date: str | None
     source_type: str = "SATELLITE_OBSERVATION"  # "SATELLITE_OBSERVATION", "CACHED_API", "MOCK/FALLBACK"
@@ -189,7 +189,7 @@ def get_ndvi_for_location(
 
     # GEE not configured or failed & no cache — return explicit unavailable marker
     return SatelliteResult(
-        ndvi=0.0,
+        ndvi=None,
         source="unavailable",
         source_type="MOCK/FALLBACK",
         scene_date=None,

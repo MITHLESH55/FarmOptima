@@ -28,7 +28,7 @@ def _range_fit_score(value: float, lo: float, hi: float) -> float:
 
 def build_decision_matrix(
     *,
-    ndvi: float,
+    ndvi: float | None = None,
     soil_ph: float,
     rainfall_mm_30d: float,
     avg_temp_c: float,
@@ -57,6 +57,7 @@ def build_decision_matrix(
 
     is_soil_available = soil_source != "unavailable" and (soil_ph > 0 or (soil_nitrogen_mg_kg or 0) > 0)
     is_weather_available = weather_source != "unavailable" and (avg_temp_c > 0 or rainfall_mm_30d > 0)
+    is_sat_available = satellite_source != "unavailable" and ndvi is not None
 
     for crop in crop_names:
         params = CROP_DATABASE[crop]
@@ -76,7 +77,7 @@ def build_decision_matrix(
             nitrogen_mg_kg=soil_nitrogen_mg_kg if (soil_nitrogen_mg_kg is not None and is_soil_available) else params["fertilizer_n_kg_per_acre"],
             organic_carbon_g_kg=soil_organic_carbon_g_kg if (soil_organic_carbon_g_kg is not None and is_soil_available) else 18.0,
             soil_moisture_pct=soil_moisture_pct if (soil_moisture_pct is not None and is_soil_available) else 30.0,
-            ndvi=ndvi,
+            ndvi=ndvi if is_sat_available else None,
             market_value_index=market_index,
             crop_params=params,
         )
@@ -89,7 +90,10 @@ def build_decision_matrix(
             0.45 * profile["soil_ph_suitability"] + 0.30 * profile["nitrogen_suitability"] + 0.25 * profile["organic_carbon_suitability"]
             if is_soil_available else 0.5
         )
-        water_efficiency_score = 0.7 * profile["water_suitability"] + 0.3 * profile["vegetation_suitability"]
+        water_efficiency_score = (
+            0.7 * profile["water_suitability"] + 0.3 * profile["vegetation_suitability"]
+            if is_sat_available else profile["water_suitability"]
+        )
         market_score = profile["market_suitability"]
 
         matrix.append([climate_score, soil_score, water_efficiency_score, market_score])

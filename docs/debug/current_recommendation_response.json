@@ -1,0 +1,624 @@
+{
+  "id": 164,
+  "location": {
+    "lat": 18.6116,
+    "lon": 73.9553,
+    "field_area_acres": 1.0,
+    "polygon_geojson": null
+  },
+  "generated_at": "2026-09-11T14:34:51.839348+00:00",
+  "provenance": {
+    "satellite_source": "gee-sentinel2",
+    "weather_source": "nasa-power",
+    "soil_source": "soilgrids",
+    "market_source": "agmarknet_historical_csv",
+    "weather_provenance": {
+      "source_name": "nasa-power",
+      "source_type": "LIVE_API",
+      "observation_date": "2026-08-12 to 2026-09-11",
+      "retrieved_at": "2026-09-11T14:34:46.128365+00:00",
+      "is_stale": false,
+      "quality_status": "good",
+      "endpoint_reference": "https://power.larc.nasa.gov/api/temporal/daily/point"
+    },
+    "soil_provenance": {
+      "source_name": "soilgrids",
+      "source_type": "MODEL_PREDICTION",
+      "observation_date": "2026-09-11",
+      "retrieved_at": "2026-09-11T14:34:51.204764+00:00",
+      "is_stale": false,
+      "quality_status": "good",
+      "endpoint_reference": "https://rest.isric.org/soilgrids/v2.0/properties/query"
+    },
+    "satellite_provenance": {
+      "source_name": "gee-sentinel2",
+      "source_type": "SATELLITE_OBSERVATION",
+      "observation_date": "2026-07-14",
+      "retrieved_at": "2026-09-11T14:34:44.841783+00:00",
+      "is_stale": false,
+      "quality_status": "good",
+      "endpoint_reference": "COPERNICUS/S2_SR_HARMONIZED"
+    },
+    "market_provenance": {
+      "source_name": "agmarknet_historical_csv",
+      "source_type": "STATIC_DATASET",
+      "observation_date": "2024-01-01",
+      "retrieved_at": "2026-09-11T14:34:51.839348+00:00",
+      "is_stale": false,
+      "quality_status": "good",
+      "endpoint_reference": "agmarknet_market_data.csv"
+    }
+  },
+  "data_completeness": {
+    "weather": "live",
+    "soil": "live",
+    "satellite": "live",
+    "market": "csv"
+  },
+  "recommendation_status": "complete",
+  "partial_data_reason": null,
+  "ndvi": 0.437,
+  "ndvi_status": "dense vegetation",
+  "satellite_scene_date": "2026-07-14",
+  "satellite_tile_url": "https://tiles.sentinel-hub.com/wms/{z}/{x}/{y}?layers=TRUE_COLOR&showlogo=false",
+  "rainfall_mm_last_30d": 281.4,
+  "avg_temp_c": 23.8,
+  "humidity_pct": 91.9,
+  "solar_radiation_mj_m2": 12.32,
+  "wind_speed_m_s": 2.53,
+  "soil_ph": 7.1,
+  "soil_moisture_pct": 15.0,
+  "soil_nitrogen_mg_kg": 1520.0,
+  "soil_organic_carbon_g_kg": 15.6,
+  "soil_sand_pct": 32.0,
+  "soil_clay_pct": 41.3,
+  "ahp_weights": {
+    "climate_suitability": 0.4495192307692308,
+    "soil_suitability": 0.25961538461538464,
+    "water_efficiency": 0.17067307692307693,
+    "market_value": 0.1201923076923077
+  },
+  "ahp_consistency_ratio": 0.0265,
+  "ahp_is_consistent": true,
+  "ahp_method": "fuzzy-ahp-chang-extent-analysis",
+  "top_crop_reference_ranges": {
+    "temperature_c": {
+      "min": 20.0,
+      "max": 35.0
+    },
+    "rainfall_mm_last_30d": {
+      "min": 150.0,
+      "max": 300.0
+    },
+    "soil_ph": {
+      "min": 5.5,
+      "max": 7.0
+    }
+  },
+  "crop_ranking": [
+    {
+      "crop": "Rice",
+      "topsis_closeness": 0.6582,
+      "electre_net_outranking": 1,
+      "rank": 1,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.883582,
+        "soil_suitability": 0.97,
+        "water_efficiency": 0.5345,
+        "market_value": 1.0
+      }
+    },
+    {
+      "crop": "Sugarcane",
+      "topsis_closeness": 0.6007,
+      "electre_net_outranking": -1,
+      "rank": 2,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.858462,
+        "soil_suitability": 1.0,
+        "water_efficiency": 0.456333,
+        "market_value": 1.0
+      }
+    },
+    {
+      "crop": "Maize",
+      "topsis_closeness": 0.4865,
+      "electre_net_outranking": 5,
+      "rank": 3,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.708382,
+        "soil_suitability": 1.0,
+        "water_efficiency": 0.811636,
+        "market_value": 1.0
+      }
+    },
+    {
+      "crop": "Soybean",
+      "topsis_closeness": 0.4441,
+      "electre_net_outranking": 0,
+      "rank": 4,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.681582,
+        "soil_suitability": 0.912547,
+        "water_efficiency": 0.8628,
+        "market_value": 1.0
+      }
+    },
+    {
+      "crop": "Chickpea",
+      "topsis_closeness": 0.3776,
+      "electre_net_outranking": -2,
+      "rank": 5,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.583582,
+        "soil_suitability": 0.932353,
+        "water_efficiency": 1.0,
+        "market_value": 1.0
+      }
+    },
+    {
+      "crop": "Groundnut",
+      "topsis_closeness": 0.3612,
+      "electre_net_outranking": -2,
+      "rank": 6,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.633342,
+        "soil_suitability": 0.912547,
+        "water_efficiency": 0.8628,
+        "market_value": 1.0
+      }
+    },
+    {
+      "crop": "Wheat",
+      "topsis_closeness": 0.3495,
+      "electre_net_outranking": 1,
+      "rank": 7,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.583582,
+        "soil_suitability": 1.0,
+        "water_efficiency": 0.925333,
+        "market_value": 1.0
+      }
+    },
+    {
+      "crop": "Cotton",
+      "topsis_closeness": 0.222,
+      "electre_net_outranking": -2,
+      "rank": 8,
+      "tie_break_applied": false,
+      "tie_break_reason": null,
+      "criteria_scores": {
+        "climate_suitability": 0.583582,
+        "soil_suitability": 1.0,
+        "water_efficiency": 0.702,
+        "market_value": 1.0
+      }
+    }
+  ],
+  "resource_plan": {
+    "water_liters_per_week": 113091.5,
+    "fertilizer_kg_per_acre": 56.9,
+    "optimizer_best_fitness": 0.13302,
+    "optimizer_generations_run": 60,
+    "irrigation_schedule": "~16156 L/day, split across 2-3 waterings/week",
+    "pareto_front": [
+      {
+        "water_liters_per_week": 60702.9,
+        "fertilizer_kg_per_acre": 16.5,
+        "water_gap": 0.301,
+        "fertilizer_gap": 0.7,
+        "resource_cost": 48974.82
+      },
+      {
+        "water_liters_per_week": 337485.2,
+        "fertilizer_kg_per_acre": 55.0,
+        "water_gap": 0.61092,
+        "fertilizer_gap": 4e-05,
+        "resource_cost": 271363.2
+      },
+      {
+        "water_liters_per_week": 337485.2,
+        "fertilizer_kg_per_acre": 55.0,
+        "water_gap": 0.61092,
+        "fertilizer_gap": 4e-05,
+        "resource_cost": 271363.2
+      },
+      {
+        "water_liters_per_week": 152073.8,
+        "fertilizer_kg_per_acre": 32.7,
+        "water_gap": 4e-05,
+        "fertilizer_gap": 0.40578,
+        "resource_cost": 122476.06
+      },
+      {
+        "water_liters_per_week": 60702.9,
+        "fertilizer_kg_per_acre": 16.5,
+        "water_gap": 0.301,
+        "fertilizer_gap": 0.7,
+        "resource_cost": 48974.82
+      },
+      {
+        "water_liters_per_week": 294696.0,
+        "fertilizer_kg_per_acre": 55.0,
+        "water_gap": 0.46995,
+        "fertilizer_gap": 0.00067,
+        "resource_cost": 237130.85
+      },
+      {
+        "water_liters_per_week": 162243.8,
+        "fertilizer_kg_per_acre": 54.9,
+        "water_gap": 0.03355,
+        "fertilizer_gap": 0.0017,
+        "resource_cost": 131167.67
+      },
+      {
+        "water_liters_per_week": 295920.9,
+        "fertilizer_kg_per_acre": 55.0,
+        "water_gap": 0.47398,
+        "fertilizer_gap": 0.00011,
+        "resource_cost": 238111.53
+      },
+      {
+        "water_liters_per_week": 159921.2,
+        "fertilizer_kg_per_acre": 58.6,
+        "water_gap": 0.0259,
+        "fertilizer_gap": 0.06631,
+        "resource_cost": 129403.18
+      },
+      {
+        "water_liters_per_week": 147505.9,
+        "fertilizer_kg_per_acre": 22.1,
+        "water_gap": 0.01501,
+        "fertilizer_gap": 0.5974,
+        "resource_cost": 118558.29
+      },
+      {
+        "water_liters_per_week": 73785.8,
+        "fertilizer_kg_per_acre": 66.4,
+        "water_gap": 0.2579,
+        "fertilizer_gap": 0.20704,
+        "resource_cost": 60688.32
+      },
+      {
+        "water_liters_per_week": 68606.5,
+        "fertilizer_kg_per_acre": 18.4,
+        "water_gap": 0.27496,
+        "fertilizer_gap": 0.6647,
+        "resource_cost": 55346.27
+      },
+      {
+        "water_liters_per_week": 113091.5,
+        "fertilizer_kg_per_acre": 56.9,
+        "water_gap": 0.12839,
+        "fertilizer_gap": 0.03479,
+        "resource_cost": 91896.05
+      },
+      {
+        "water_liters_per_week": 100514.0,
+        "fertilizer_kg_per_acre": 24.3,
+        "water_gap": 0.16983,
+        "fertilizer_gap": 0.55793,
+        "resource_cost": 81019.01
+      },
+      {
+        "water_liters_per_week": 81021.3,
+        "fertilizer_kg_per_acre": 20.5,
+        "water_gap": 0.23406,
+        "fertilizer_gap": 0.6275,
+        "resource_cost": 65329.2
+      },
+      {
+        "water_liters_per_week": 122437.4,
+        "fertilizer_kg_per_acre": 43.1,
+        "water_gap": 0.0976,
+        "fertilizer_gap": 0.21558,
+        "resource_cost": 99028.48
+      },
+      {
+        "water_liters_per_week": 91437.0,
+        "fertilizer_kg_per_acre": 53.5,
+        "water_gap": 0.19974,
+        "fertilizer_gap": 0.02767,
+        "resource_cost": 74486.53
+      },
+      {
+        "water_liters_per_week": 62523.8,
+        "fertilizer_kg_per_acre": 63.5,
+        "water_gap": 0.295,
+        "fertilizer_gap": 0.15398,
+        "resource_cost": 51605.79
+      },
+      {
+        "water_liters_per_week": 138217.4,
+        "fertilizer_kg_per_acre": 30.0,
+        "water_gap": 0.04561,
+        "fertilizer_gap": 0.45406,
+        "resource_cost": 111324.55
+      },
+      {
+        "water_liters_per_week": 128052.2,
+        "fertilizer_kg_per_acre": 28.5,
+        "water_gap": 0.0791,
+        "fertilizer_gap": 0.48178,
+        "resource_cost": 103154.31
+      },
+      {
+        "water_liters_per_week": 94948.4,
+        "fertilizer_kg_per_acre": 60.5,
+        "water_gap": 0.18817,
+        "fertilizer_gap": 0.10046,
+        "resource_cost": 77471.89
+      },
+      {
+        "water_liters_per_week": 116167.8,
+        "fertilizer_kg_per_acre": 63.4,
+        "water_gap": 0.11826,
+        "fertilizer_gap": 0.15322,
+        "resource_cost": 94519.95
+      },
+      {
+        "water_liters_per_week": 93479.7,
+        "fertilizer_kg_per_acre": 40.8,
+        "water_gap": 0.19301,
+        "fertilizer_gap": 0.25774,
+        "resource_cost": 75804.4
+      },
+      {
+        "water_liters_per_week": 122473.5,
+        "fertilizer_kg_per_acre": 31.5,
+        "water_gap": 0.09748,
+        "fertilizer_gap": 0.42683,
+        "resource_cost": 98766.93
+      },
+      {
+        "water_liters_per_week": 97472.3,
+        "fertilizer_kg_per_acre": 35.5,
+        "water_gap": 0.17985,
+        "fertilizer_gap": 0.35373,
+        "resource_cost": 78866.43
+      },
+      {
+        "water_liters_per_week": 80060.0,
+        "fertilizer_kg_per_acre": 32.9,
+        "water_gap": 0.23722,
+        "fertilizer_gap": 0.40263,
+        "resource_cost": 64869.41
+      },
+      {
+        "water_liters_per_week": 149468.7,
+        "fertilizer_kg_per_acre": 21.2,
+        "water_gap": 0.00854,
+        "fertilizer_gap": 0.6143,
+        "resource_cost": 120105.34
+      },
+      {
+        "water_liters_per_week": 110121.3,
+        "fertilizer_kg_per_acre": 39.7,
+        "water_gap": 0.13818,
+        "fertilizer_gap": 0.2778,
+        "resource_cost": 89090.08
+      },
+      {
+        "water_liters_per_week": 107943.2,
+        "fertilizer_kg_per_acre": 65.2,
+        "water_gap": 0.14536,
+        "fertilizer_gap": 0.18464,
+        "resource_cost": 87983.43
+      },
+      {
+        "water_liters_per_week": 135117.1,
+        "fertilizer_kg_per_acre": 28.5,
+        "water_gap": 0.05582,
+        "fertilizer_gap": 0.48178,
+        "resource_cost": 108806.23
+      },
+      {
+        "water_liters_per_week": 110700.8,
+        "fertilizer_kg_per_acre": 37.9,
+        "water_gap": 0.13627,
+        "fertilizer_gap": 0.31136,
+        "resource_cost": 89507.49
+      },
+      {
+        "water_liters_per_week": 119045.6,
+        "fertilizer_kg_per_acre": 30.2,
+        "water_gap": 0.10878,
+        "fertilizer_gap": 0.45106,
+        "resource_cost": 95991.31
+      },
+      {
+        "water_liters_per_week": 96780.9,
+        "fertilizer_kg_per_acre": 60.9,
+        "water_gap": 0.18213,
+        "fertilizer_gap": 0.1081,
+        "resource_cost": 78948.36
+      },
+      {
+        "water_liters_per_week": 136094.9,
+        "fertilizer_kg_per_acre": 26.2,
+        "water_gap": 0.0526,
+        "fertilizer_gap": 0.52295,
+        "resource_cost": 109531.85
+      },
+      {
+        "water_liters_per_week": 119551.0,
+        "fertilizer_kg_per_acre": 31.5,
+        "water_gap": 0.10711,
+        "fertilizer_gap": 0.42683,
+        "resource_cost": 96428.94
+      },
+      {
+        "water_liters_per_week": 99878.5,
+        "fertilizer_kg_per_acre": 62.0,
+        "water_gap": 0.17193,
+        "fertilizer_gap": 0.12799,
+        "resource_cost": 81453.82
+      },
+      {
+        "water_liters_per_week": 88487.3,
+        "fertilizer_kg_per_acre": 37.9,
+        "water_gap": 0.20946,
+        "fertilizer_gap": 0.31136,
+        "resource_cost": 71736.69
+      },
+      {
+        "water_liters_per_week": 103712.5,
+        "fertilizer_kg_per_acre": 62.0,
+        "water_gap": 0.15929,
+        "fertilizer_gap": 0.12799,
+        "resource_cost": 84520.97
+      },
+      {
+        "water_liters_per_week": 86020.5,
+        "fertilizer_kg_per_acre": 65.5,
+        "water_gap": 0.21759,
+        "fertilizer_gap": 0.19011,
+        "resource_cost": 70452.82
+      },
+      {
+        "water_liters_per_week": 106626.6,
+        "fertilizer_kg_per_acre": 38.3,
+        "water_gap": 0.14969,
+        "fertilizer_gap": 0.30302,
+        "resource_cost": 86259.62
+      }
+    ],
+    "convergence_history": [
+      0.16822,
+      0.15256,
+      0.15256,
+      0.15256,
+      0.10579,
+      0.10579,
+      0.10332,
+      0.1034,
+      0.1034,
+      0.15697,
+      0.14176,
+      0.14176,
+      0.14176,
+      0.17013,
+      0.17013,
+      0.1219,
+      0.13594,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.13579,
+      0.12771,
+      0.03491,
+      0.14489,
+      0.20521,
+      0.12504,
+      0.12504,
+      0.11263,
+      0.08088,
+      0.08088,
+      0.12629,
+      0.12629,
+      0.14737,
+      0.11936,
+      0.11936,
+      0.11936,
+      0.11936,
+      0.10066,
+      0.10066,
+      0.10066,
+      0.10066,
+      0.10096,
+      0.10096,
+      0.10096,
+      0.09785,
+      0.09785,
+      0.09669,
+      0.09669,
+      0.13599,
+      0.13599,
+      0.13302,
+      0.13302,
+      0.13302
+    ],
+    "optimizer_method": "nsga2-multiobjective"
+  },
+  "fertilizer_plan": {
+    "crop": "Rice",
+    "field_area_acres": 1.0,
+    "nutrient_requirements": {
+      "nitrogen_kg_per_acre": 51.21,
+      "phosphorus_kg_per_acre": 24.0,
+      "potassium_kg_per_acre": 20.0,
+      "total_field_nitrogen_kg": 51.21,
+      "total_field_phosphorus_kg": 24.0,
+      "total_field_potassium_kg": 20.0
+    },
+    "commercial_fertilizers": [
+      {
+        "name": "DAP (Diammonium Phosphate)",
+        "composition": "18% N, 46% P\u2082O\u2085",
+        "quantity_kg_per_acre": 52.17,
+        "quantity_kg_total": 52.17,
+        "application_stage": "Basal (at sowing/transplanting)"
+      },
+      {
+        "name": "Urea",
+        "composition": "46% N",
+        "quantity_kg_per_acre": 90.91,
+        "quantity_kg_total": 90.91,
+        "application_stage": "Split: 50% Basal, 25% Top Dressing 1, 25% Top Dressing 2"
+      },
+      {
+        "name": "MOP (Muriate of Potash)",
+        "composition": "60% K\u2082O",
+        "quantity_kg_per_acre": 33.33,
+        "quantity_kg_total": 33.33,
+        "application_stage": "Basal (at sowing/transplanting)"
+      }
+    ],
+    "application_schedule": [
+      {
+        "stage": "Basal (Sowing / Transplanting)",
+        "dap_kg": 52.17,
+        "urea_kg": 45.45,
+        "mop_kg": 33.33,
+        "total_kg": 130.95
+      },
+      {
+        "stage": "First Top Dressing (21-30 Days)",
+        "dap_kg": 0.0,
+        "urea_kg": 22.73,
+        "mop_kg": 0.0,
+        "total_kg": 22.73
+      },
+      {
+        "stage": "Second Top Dressing (40-50 Days)",
+        "dap_kg": 0.0,
+        "urea_kg": 22.73,
+        "mop_kg": 0.0,
+        "total_kg": 22.73
+      }
+    ],
+    "explanation": "For Rice on 1.0 acre(s), total nutrient requirement is 51.2 kg/acre N, 24.0 kg/acre P\u2082O\u2085, and 20.0 kg/acre K\u2082O. Phosphorus is supplied via DAP (52.2 kg total), which also contributes 9.4 kg N. Remaining Nitrogen is supplied via Urea (90.9 kg total). Potassium is supplied via MOP (33.3 kg total). All DAP and MOP with 50% Urea are applied basal; remaining Urea is split into two equal top dressings to maximize nutrient absorption efficiency."
+  },
+  "ai_explanation": "Why Rice? Among the currently evaluated crops, Rice has the highest TOPSIS closeness score (0.658), so it is closest to the ideal multi-criteria solution under this recommendation run. The strongest influence on the ranking is 'climate suitability' with an AHP weight of 0.45, which is a relative importance measure, not a direct suitability score. This ranking is compared against the configured crop-reference ranges in the crop database and the current live field conditions, then checked by ELECTRE as an outranking cross-check. The NSGA-II optimizer then selected a resource plan of 113092 L/week of irrigation and 56.9 kg/acre of fertilizer, with final fitness cost 0.1330 after 60 generations; lower fitness is better only within the optimizer's objective function, not as a universal crop-quality label."
+}

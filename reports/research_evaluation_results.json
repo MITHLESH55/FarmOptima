@@ -1,0 +1,1287 @@
+{
+  "metadata": {
+    "title": "FarmOptima MCDM Research Evaluation Experiment",
+    "date": "2026-09-24",
+    "evaluator": "FarmOptima Research Evaluation Pipeline",
+    "num_scenarios": 6,
+    "num_candidate_crops": 8,
+    "criteria": [
+      "climate_suitability",
+      "soil_suitability",
+      "water_efficiency",
+      "market_value"
+    ]
+  },
+  "criteria_weights": {
+    "equal": [
+      0.25,
+      0.25,
+      0.25,
+      0.25
+    ],
+    "crisp_ahp": [
+      0.4495,
+      0.2596,
+      0.1707,
+      0.1202
+    ],
+    "fuzzy_ahp": [
+      0.9775,
+      0.0225,
+      0.0,
+      0.0
+    ],
+    "ahp_consistency_ratio": 0.0265
+  },
+  "aggregate_metrics": {
+    "mean_spearman_crisp_vs_fuzzy_ahp": 0.7222,
+    "mean_spearman_equal_vs_fuzzy_ahp": 0.4722,
+    "mean_spearman_fuzzy_ahp_vs_electre": 0.6984,
+    "top1_agreement_crisp_vs_fuzzy_pct": 50.0,
+    "top1_agreement_fuzzy_vs_electre_pct": 33.3
+  },
+  "scenario_evaluations": [
+    {
+      "scenario_id": "SCENARIO_01_MAHARASHTRA_SEMIARID",
+      "region": "Maharashtra Semi-Arid (Pune / Ahmednagar)",
+      "zone": "Western Plateau & Hill Zone (Semi-Arid)",
+      "environmental_conditions": {
+        "avg_temp_c": 28.5,
+        "rainfall_mm_30d": 42.0,
+        "humidity_pct": 52.0,
+        "soil_ph": 7.8,
+        "soil_nitrogen_mg_kg": 180.0,
+        "soil_organic_carbon_g_kg": 5.2,
+        "soil_moisture_pct": 22.0,
+        "ndvi": 0.42
+      },
+      "rankings": {
+        "equal_weight_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.8065
+          },
+          {
+            "rank": 2,
+            "crop": "Cotton",
+            "closeness": 0.5809
+          },
+          {
+            "rank": 3,
+            "crop": "Wheat",
+            "closeness": 0.5488
+          },
+          {
+            "rank": 4,
+            "crop": "Groundnut",
+            "closeness": 0.4642
+          },
+          {
+            "rank": 5,
+            "crop": "Soybean",
+            "closeness": 0.4523
+          },
+          {
+            "rank": 6,
+            "crop": "Maize",
+            "closeness": 0.4108
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "closeness": 0.1918
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "closeness": 0.1415
+          }
+        ],
+        "crisp_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.7786
+          },
+          {
+            "rank": 2,
+            "crop": "Cotton",
+            "closeness": 0.6285
+          },
+          {
+            "rank": 3,
+            "crop": "Wheat",
+            "closeness": 0.572
+          },
+          {
+            "rank": 4,
+            "crop": "Groundnut",
+            "closeness": 0.4741
+          },
+          {
+            "rank": 5,
+            "crop": "Maize",
+            "closeness": 0.4575
+          },
+          {
+            "rank": 6,
+            "crop": "Soybean",
+            "closeness": 0.4297
+          },
+          {
+            "rank": 7,
+            "crop": "Sugarcane",
+            "closeness": 0.1956
+          },
+          {
+            "rank": 8,
+            "crop": "Rice",
+            "closeness": 0.1162
+          }
+        ],
+        "fuzzy_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Groundnut",
+            "closeness": 0.9506
+          },
+          {
+            "rank": 2,
+            "crop": "Cotton",
+            "closeness": 0.75
+          },
+          {
+            "rank": 3,
+            "crop": "Maize",
+            "closeness": 0.7477
+          },
+          {
+            "rank": 4,
+            "crop": "Soybean",
+            "closeness": 0.746
+          },
+          {
+            "rank": 5,
+            "crop": "Chickpea",
+            "closeness": 0.5231
+          },
+          {
+            "rank": 6,
+            "crop": "Wheat",
+            "closeness": 0.5219
+          },
+          {
+            "rank": 7,
+            "crop": "Sugarcane",
+            "closeness": 0.25
+          },
+          {
+            "rank": 8,
+            "crop": "Rice",
+            "closeness": 0.0
+          }
+        ],
+        "electre_i": [
+          {
+            "rank": 1,
+            "crop": "Cotton",
+            "net_outranking_count": 5
+          },
+          {
+            "rank": 2,
+            "crop": "Groundnut",
+            "net_outranking_count": 4
+          },
+          {
+            "rank": 3,
+            "crop": "Chickpea",
+            "net_outranking_count": 3
+          },
+          {
+            "rank": 4,
+            "crop": "Soybean",
+            "net_outranking_count": 1
+          },
+          {
+            "rank": 5,
+            "crop": "Maize",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 6,
+            "crop": "Wheat",
+            "net_outranking_count": -2
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "net_outranking_count": -4
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "net_outranking_count": -6
+          }
+        ]
+      },
+      "top1_crops": {
+        "equal_weight": "Chickpea",
+        "crisp_ahp": "Chickpea",
+        "fuzzy_ahp": "Groundnut",
+        "electre_i": "Cotton"
+      },
+      "top3_overlap_with_fuzzy": {
+        "equal_weight_jaccard": 0.2,
+        "crisp_ahp_jaccard": 0.2,
+        "electre_i_jaccard": 0.5
+      },
+      "rank_correlations": {
+        "spearman_equal_vs_fuzzy": 0.4524,
+        "spearman_crisp_vs_fuzzy": 0.5,
+        "spearman_fuzzy_vs_electre": 0.8571
+      },
+      "execution_latencies_ms": {
+        "equal_weight_topsis": 0.144,
+        "crisp_ahp_topsis": 0.045,
+        "fuzzy_ahp_topsis": 0.035,
+        "electre_i": 0.127
+      }
+    },
+    {
+      "scenario_id": "SCENARIO_02_PUNJAB_ALLUVIAL_IRRIGATED",
+      "region": "Punjab Irrigated Plain (Ludhiana)",
+      "zone": "Trans-Gangetic Plain Zone (Subtropical Irrigated)",
+      "environmental_conditions": {
+        "avg_temp_c": 21.0,
+        "rainfall_mm_30d": 18.0,
+        "humidity_pct": 68.0,
+        "soil_ph": 7.2,
+        "soil_nitrogen_mg_kg": 260.0,
+        "soil_organic_carbon_g_kg": 7.1,
+        "soil_moisture_pct": 34.0,
+        "ndvi": 0.68
+      },
+      "rankings": {
+        "equal_weight_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.7845
+          },
+          {
+            "rank": 2,
+            "crop": "Soybean",
+            "closeness": 0.4904
+          },
+          {
+            "rank": 3,
+            "crop": "Cotton",
+            "closeness": 0.4898
+          },
+          {
+            "rank": 4,
+            "crop": "Wheat",
+            "closeness": 0.4727
+          },
+          {
+            "rank": 5,
+            "crop": "Groundnut",
+            "closeness": 0.4644
+          },
+          {
+            "rank": 6,
+            "crop": "Maize",
+            "closeness": 0.3606
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "closeness": 0.243
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "closeness": 0.036
+          }
+        ],
+        "crisp_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.899
+          },
+          {
+            "rank": 2,
+            "crop": "Wheat",
+            "closeness": 0.5621
+          },
+          {
+            "rank": 3,
+            "crop": "Soybean",
+            "closeness": 0.372
+          },
+          {
+            "rank": 4,
+            "crop": "Maize",
+            "closeness": 0.3292
+          },
+          {
+            "rank": 5,
+            "crop": "Cotton",
+            "closeness": 0.327
+          },
+          {
+            "rank": 6,
+            "crop": "Groundnut",
+            "closeness": 0.3177
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "closeness": 0.1258
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "closeness": 0.0602
+          }
+        ],
+        "fuzzy_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 1.0
+          },
+          {
+            "rank": 2,
+            "crop": "Wheat",
+            "closeness": 0.6153
+          },
+          {
+            "rank": 3,
+            "crop": "Soybean",
+            "closeness": 0.231
+          },
+          {
+            "rank": 4,
+            "crop": "Maize",
+            "closeness": 0.231
+          },
+          {
+            "rank": 5,
+            "crop": "Cotton",
+            "closeness": 0.2308
+          },
+          {
+            "rank": 6,
+            "crop": "Groundnut",
+            "closeness": 0.0947
+          },
+          {
+            "rank": 7,
+            "crop": "Sugarcane",
+            "closeness": 0.0769
+          },
+          {
+            "rank": 8,
+            "crop": "Rice",
+            "closeness": 0.0033
+          }
+        ],
+        "electre_i": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "net_outranking_count": 6
+          },
+          {
+            "rank": 2,
+            "crop": "Cotton",
+            "net_outranking_count": 5
+          },
+          {
+            "rank": 3,
+            "crop": "Soybean",
+            "net_outranking_count": 2
+          },
+          {
+            "rank": 4,
+            "crop": "Wheat",
+            "net_outranking_count": 1
+          },
+          {
+            "rank": 5,
+            "crop": "Groundnut",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 6,
+            "crop": "Maize",
+            "net_outranking_count": -3
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "net_outranking_count": -4
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "net_outranking_count": -6
+          }
+        ]
+      },
+      "top1_crops": {
+        "equal_weight": "Chickpea",
+        "crisp_ahp": "Chickpea",
+        "fuzzy_ahp": "Chickpea",
+        "electre_i": "Chickpea"
+      },
+      "top3_overlap_with_fuzzy": {
+        "equal_weight_jaccard": 0.5,
+        "crisp_ahp_jaccard": 1.0,
+        "electre_i_jaccard": 0.5
+      },
+      "rank_correlations": {
+        "spearman_equal_vs_fuzzy": 0.8095,
+        "spearman_crisp_vs_fuzzy": 0.9762,
+        "spearman_fuzzy_vs_electre": 0.7619
+      },
+      "execution_latencies_ms": {
+        "equal_weight_topsis": 0.047,
+        "crisp_ahp_topsis": 0.032,
+        "fuzzy_ahp_topsis": 0.03,
+        "electre_i": 0.112
+      }
+    },
+    {
+      "scenario_id": "SCENARIO_03_TAMILNADU_COASTAL_HUMID",
+      "region": "Tamil Nadu Cauvery Delta (Thanjavur)",
+      "zone": "Southern Plateau and Coastal Zone (Humid Tropical)",
+      "environmental_conditions": {
+        "avg_temp_c": 31.2,
+        "rainfall_mm_30d": 135.0,
+        "humidity_pct": 79.0,
+        "soil_ph": 6.6,
+        "soil_nitrogen_mg_kg": 240.0,
+        "soil_organic_carbon_g_kg": 9.4,
+        "soil_moisture_pct": 48.0,
+        "ndvi": 0.61
+      },
+      "rankings": {
+        "equal_weight_topsis": [
+          {
+            "rank": 1,
+            "crop": "Groundnut",
+            "closeness": 0.806
+          },
+          {
+            "rank": 2,
+            "crop": "Soybean",
+            "closeness": 0.7814
+          },
+          {
+            "rank": 3,
+            "crop": "Cotton",
+            "closeness": 0.7731
+          },
+          {
+            "rank": 4,
+            "crop": "Maize",
+            "closeness": 0.6468
+          },
+          {
+            "rank": 5,
+            "crop": "Rice",
+            "closeness": 0.592
+          },
+          {
+            "rank": 6,
+            "crop": "Wheat",
+            "closeness": 0.4734
+          },
+          {
+            "rank": 7,
+            "crop": "Chickpea",
+            "closeness": 0.4555
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "closeness": 0.4494
+          }
+        ],
+        "crisp_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Groundnut",
+            "closeness": 0.911
+          },
+          {
+            "rank": 2,
+            "crop": "Soybean",
+            "closeness": 0.8363
+          },
+          {
+            "rank": 3,
+            "crop": "Maize",
+            "closeness": 0.811
+          },
+          {
+            "rank": 4,
+            "crop": "Cotton",
+            "closeness": 0.7914
+          },
+          {
+            "rank": 5,
+            "crop": "Rice",
+            "closeness": 0.7512
+          },
+          {
+            "rank": 6,
+            "crop": "Sugarcane",
+            "closeness": 0.6674
+          },
+          {
+            "rank": 7,
+            "crop": "Wheat",
+            "closeness": 0.3718
+          },
+          {
+            "rank": 8,
+            "crop": "Chickpea",
+            "closeness": 0.2928
+          }
+        ],
+        "fuzzy_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Maize",
+            "closeness": 0.9932
+          },
+          {
+            "rank": 2,
+            "crop": "Sugarcane",
+            "closeness": 0.9868
+          },
+          {
+            "rank": 3,
+            "crop": "Groundnut",
+            "closeness": 0.9612
+          },
+          {
+            "rank": 4,
+            "crop": "Rice",
+            "closeness": 0.9269
+          },
+          {
+            "rank": 5,
+            "crop": "Cotton",
+            "closeness": 0.8896
+          },
+          {
+            "rank": 6,
+            "crop": "Soybean",
+            "closeness": 0.8402
+          },
+          {
+            "rank": 7,
+            "crop": "Wheat",
+            "closeness": 0.2802
+          },
+          {
+            "rank": 8,
+            "crop": "Chickpea",
+            "closeness": 0.0132
+          }
+        ],
+        "electre_i": [
+          {
+            "rank": 1,
+            "crop": "Groundnut",
+            "net_outranking_count": 4
+          },
+          {
+            "rank": 2,
+            "crop": "Maize",
+            "net_outranking_count": 2
+          },
+          {
+            "rank": 3,
+            "crop": "Cotton",
+            "net_outranking_count": 1
+          },
+          {
+            "rank": 4,
+            "crop": "Soybean",
+            "net_outranking_count": 1
+          },
+          {
+            "rank": 5,
+            "crop": "Rice",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 6,
+            "crop": "Sugarcane",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 7,
+            "crop": "Chickpea",
+            "net_outranking_count": -2
+          },
+          {
+            "rank": 8,
+            "crop": "Wheat",
+            "net_outranking_count": -4
+          }
+        ]
+      },
+      "top1_crops": {
+        "equal_weight": "Groundnut",
+        "crisp_ahp": "Groundnut",
+        "fuzzy_ahp": "Maize",
+        "electre_i": "Groundnut"
+      },
+      "top3_overlap_with_fuzzy": {
+        "equal_weight_jaccard": 0.2,
+        "crisp_ahp_jaccard": 0.5,
+        "electre_i_jaccard": 0.5
+      },
+      "rank_correlations": {
+        "spearman_equal_vs_fuzzy": 0.1429,
+        "spearman_crisp_vs_fuzzy": 0.5,
+        "spearman_fuzzy_vs_electre": 0.619
+      },
+      "execution_latencies_ms": {
+        "equal_weight_topsis": 0.035,
+        "crisp_ahp_topsis": 0.03,
+        "fuzzy_ahp_topsis": 0.029,
+        "electre_i": 0.108
+      }
+    },
+    {
+      "scenario_id": "SCENARIO_04_RAJASTHAN_ARID",
+      "region": "Rajasthan Arid Zone (Jodhpur / Nagaur)",
+      "zone": "Western Dry Zone (Arid)",
+      "environmental_conditions": {
+        "avg_temp_c": 34.5,
+        "rainfall_mm_30d": 12.0,
+        "humidity_pct": 28.0,
+        "soil_ph": 8.4,
+        "soil_nitrogen_mg_kg": 110.0,
+        "soil_organic_carbon_g_kg": 2.8,
+        "soil_moisture_pct": 12.0,
+        "ndvi": 0.24
+      },
+      "rankings": {
+        "equal_weight_topsis": [
+          {
+            "rank": 1,
+            "crop": "Cotton",
+            "closeness": 0.8298
+          },
+          {
+            "rank": 2,
+            "crop": "Chickpea",
+            "closeness": 0.6475
+          },
+          {
+            "rank": 3,
+            "crop": "Groundnut",
+            "closeness": 0.4535
+          },
+          {
+            "rank": 4,
+            "crop": "Sugarcane",
+            "closeness": 0.4174
+          },
+          {
+            "rank": 5,
+            "crop": "Wheat",
+            "closeness": 0.3959
+          },
+          {
+            "rank": 6,
+            "crop": "Rice",
+            "closeness": 0.3529
+          },
+          {
+            "rank": 7,
+            "crop": "Maize",
+            "closeness": 0.3453
+          },
+          {
+            "rank": 8,
+            "crop": "Soybean",
+            "closeness": 0.3194
+          }
+        ],
+        "crisp_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Cotton",
+            "closeness": 0.8972
+          },
+          {
+            "rank": 2,
+            "crop": "Sugarcane",
+            "closeness": 0.576
+          },
+          {
+            "rank": 3,
+            "crop": "Groundnut",
+            "closeness": 0.5388
+          },
+          {
+            "rank": 4,
+            "crop": "Chickpea",
+            "closeness": 0.525
+          },
+          {
+            "rank": 5,
+            "crop": "Rice",
+            "closeness": 0.479
+          },
+          {
+            "rank": 6,
+            "crop": "Maize",
+            "closeness": 0.4504
+          },
+          {
+            "rank": 7,
+            "crop": "Wheat",
+            "closeness": 0.3139
+          },
+          {
+            "rank": 8,
+            "crop": "Soybean",
+            "closeness": 0.2359
+          }
+        ],
+        "fuzzy_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Cotton",
+            "closeness": 1.0
+          },
+          {
+            "rank": 2,
+            "crop": "Sugarcane",
+            "closeness": 0.9134
+          },
+          {
+            "rank": 3,
+            "crop": "Rice",
+            "closeness": 0.8706
+          },
+          {
+            "rank": 4,
+            "crop": "Groundnut",
+            "closeness": 0.7802
+          },
+          {
+            "rank": 5,
+            "crop": "Maize",
+            "closeness": 0.6585
+          },
+          {
+            "rank": 6,
+            "crop": "Chickpea",
+            "closeness": 0.2101
+          },
+          {
+            "rank": 7,
+            "crop": "Soybean",
+            "closeness": 0.1419
+          },
+          {
+            "rank": 8,
+            "crop": "Wheat",
+            "closeness": 0.0186
+          }
+        ],
+        "electre_i": [
+          {
+            "rank": 1,
+            "crop": "Cotton",
+            "net_outranking_count": 6
+          },
+          {
+            "rank": 2,
+            "crop": "Groundnut",
+            "net_outranking_count": 2
+          },
+          {
+            "rank": 3,
+            "crop": "Chickpea",
+            "net_outranking_count": 2
+          },
+          {
+            "rank": 4,
+            "crop": "Rice",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 5,
+            "crop": "Maize",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 6,
+            "crop": "Sugarcane",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 7,
+            "crop": "Soybean",
+            "net_outranking_count": -2
+          },
+          {
+            "rank": 8,
+            "crop": "Wheat",
+            "net_outranking_count": -5
+          }
+        ]
+      },
+      "top1_crops": {
+        "equal_weight": "Cotton",
+        "crisp_ahp": "Cotton",
+        "fuzzy_ahp": "Cotton",
+        "electre_i": "Cotton"
+      },
+      "top3_overlap_with_fuzzy": {
+        "equal_weight_jaccard": 0.2,
+        "crisp_ahp_jaccard": 0.5,
+        "electre_i_jaccard": 0.2
+      },
+      "rank_correlations": {
+        "spearman_equal_vs_fuzzy": 0.4762,
+        "spearman_crisp_vs_fuzzy": 0.8571,
+        "spearman_fuzzy_vs_electre": 0.6429
+      },
+      "execution_latencies_ms": {
+        "equal_weight_topsis": 0.044,
+        "crisp_ahp_topsis": 0.031,
+        "fuzzy_ahp_topsis": 0.03,
+        "electre_i": 0.108
+      }
+    },
+    {
+      "scenario_id": "SCENARIO_05_UP_GANGETIC_ALLUVIAL",
+      "region": "Uttar Pradesh Gangetic Plain (Varanasi)",
+      "zone": "Middle Gangetic Plain Zone",
+      "environmental_conditions": {
+        "avg_temp_c": 25.0,
+        "rainfall_mm_30d": 65.0,
+        "humidity_pct": 62.0,
+        "soil_ph": 7.0,
+        "soil_nitrogen_mg_kg": 210.0,
+        "soil_organic_carbon_g_kg": 6.5,
+        "soil_moisture_pct": 31.0,
+        "ndvi": 0.54
+      },
+      "rankings": {
+        "equal_weight_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.8276
+          },
+          {
+            "rank": 2,
+            "crop": "Groundnut",
+            "closeness": 0.6767
+          },
+          {
+            "rank": 3,
+            "crop": "Soybean",
+            "closeness": 0.6767
+          },
+          {
+            "rank": 4,
+            "crop": "Wheat",
+            "closeness": 0.597
+          },
+          {
+            "rank": 5,
+            "crop": "Cotton",
+            "closeness": 0.5127
+          },
+          {
+            "rank": 6,
+            "crop": "Maize",
+            "closeness": 0.506
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "closeness": 0.2374
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "closeness": 0.0796
+          }
+        ],
+        "crisp_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.8922
+          },
+          {
+            "rank": 2,
+            "crop": "Groundnut",
+            "closeness": 0.7535
+          },
+          {
+            "rank": 3,
+            "crop": "Soybean",
+            "closeness": 0.7535
+          },
+          {
+            "rank": 4,
+            "crop": "Wheat",
+            "closeness": 0.6727
+          },
+          {
+            "rank": 5,
+            "crop": "Maize",
+            "closeness": 0.6099
+          },
+          {
+            "rank": 6,
+            "crop": "Cotton",
+            "closeness": 0.5513
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "closeness": 0.1996
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "closeness": 0.1729
+          }
+        ],
+        "fuzzy_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 1.0
+          },
+          {
+            "rank": 2,
+            "crop": "Groundnut",
+            "closeness": 0.9963
+          },
+          {
+            "rank": 3,
+            "crop": "Soybean",
+            "closeness": 0.9963
+          },
+          {
+            "rank": 4,
+            "crop": "Maize",
+            "closeness": 0.9822
+          },
+          {
+            "rank": 5,
+            "crop": "Wheat",
+            "closeness": 0.9809
+          },
+          {
+            "rank": 6,
+            "crop": "Cotton",
+            "closeness": 0.9762
+          },
+          {
+            "rank": 7,
+            "crop": "Sugarcane",
+            "closeness": 0.382
+          },
+          {
+            "rank": 8,
+            "crop": "Rice",
+            "closeness": 0.0118
+          }
+        ],
+        "electre_i": [
+          {
+            "rank": 1,
+            "crop": "Groundnut",
+            "net_outranking_count": 4
+          },
+          {
+            "rank": 2,
+            "crop": "Cotton",
+            "net_outranking_count": 4
+          },
+          {
+            "rank": 3,
+            "crop": "Soybean",
+            "net_outranking_count": 4
+          },
+          {
+            "rank": 4,
+            "crop": "Chickpea",
+            "net_outranking_count": 4
+          },
+          {
+            "rank": 5,
+            "crop": "Wheat",
+            "net_outranking_count": -3
+          },
+          {
+            "rank": 6,
+            "crop": "Maize",
+            "net_outranking_count": -3
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "net_outranking_count": -4
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "net_outranking_count": -6
+          }
+        ]
+      },
+      "top1_crops": {
+        "equal_weight": "Chickpea",
+        "crisp_ahp": "Chickpea",
+        "fuzzy_ahp": "Chickpea",
+        "electre_i": "Groundnut"
+      },
+      "top3_overlap_with_fuzzy": {
+        "equal_weight_jaccard": 1.0,
+        "crisp_ahp_jaccard": 1.0,
+        "electre_i_jaccard": 0.5
+      },
+      "rank_correlations": {
+        "spearman_equal_vs_fuzzy": 0.9048,
+        "spearman_crisp_vs_fuzzy": 0.9524,
+        "spearman_fuzzy_vs_electre": 0.619
+      },
+      "execution_latencies_ms": {
+        "equal_weight_topsis": 0.033,
+        "crisp_ahp_topsis": 0.029,
+        "fuzzy_ahp_topsis": 0.029,
+        "electre_i": 0.106
+      }
+    },
+    {
+      "scenario_id": "SCENARIO_06_CENTRAL_BLACK_SOIL",
+      "region": "Madhya Pradesh / Vidarbha Black Soil (Nagpur)",
+      "zone": "Central Plateau Zone (Vertisol Black Cotton)",
+      "environmental_conditions": {
+        "avg_temp_c": 29.8,
+        "rainfall_mm_30d": 55.0,
+        "humidity_pct": 58.0,
+        "soil_ph": 7.6,
+        "soil_nitrogen_mg_kg": 195.0,
+        "soil_organic_carbon_g_kg": 5.8,
+        "soil_moisture_pct": 28.0,
+        "ndvi": 0.48
+      },
+      "rankings": {
+        "equal_weight_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.7591
+          },
+          {
+            "rank": 2,
+            "crop": "Wheat",
+            "closeness": 0.5414
+          },
+          {
+            "rank": 3,
+            "crop": "Cotton",
+            "closeness": 0.5233
+          },
+          {
+            "rank": 4,
+            "crop": "Groundnut",
+            "closeness": 0.5194
+          },
+          {
+            "rank": 5,
+            "crop": "Soybean",
+            "closeness": 0.5131
+          },
+          {
+            "rank": 6,
+            "crop": "Maize",
+            "closeness": 0.4449
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "closeness": 0.1891
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "closeness": 0.1233
+          }
+        ],
+        "crisp_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Chickpea",
+            "closeness": 0.6329
+          },
+          {
+            "rank": 2,
+            "crop": "Cotton",
+            "closeness": 0.5752
+          },
+          {
+            "rank": 3,
+            "crop": "Groundnut",
+            "closeness": 0.5412
+          },
+          {
+            "rank": 4,
+            "crop": "Soybean",
+            "closeness": 0.5188
+          },
+          {
+            "rank": 5,
+            "crop": "Maize",
+            "closeness": 0.516
+          },
+          {
+            "rank": 6,
+            "crop": "Wheat",
+            "closeness": 0.4767
+          },
+          {
+            "rank": 7,
+            "crop": "Sugarcane",
+            "closeness": 0.1897
+          },
+          {
+            "rank": 8,
+            "crop": "Rice",
+            "closeness": 0.1181
+          }
+        ],
+        "fuzzy_ahp_topsis": [
+          {
+            "rank": 1,
+            "crop": "Groundnut",
+            "closeness": 0.9631
+          },
+          {
+            "rank": 2,
+            "crop": "Cotton",
+            "closeness": 0.8672
+          },
+          {
+            "rank": 3,
+            "crop": "Maize",
+            "closeness": 0.8651
+          },
+          {
+            "rank": 4,
+            "crop": "Soybean",
+            "closeness": 0.8637
+          },
+          {
+            "rank": 5,
+            "crop": "Sugarcane",
+            "closeness": 0.2894
+          },
+          {
+            "rank": 6,
+            "crop": "Chickpea",
+            "closeness": 0.0847
+          },
+          {
+            "rank": 7,
+            "crop": "Wheat",
+            "closeness": 0.0773
+          },
+          {
+            "rank": 8,
+            "crop": "Rice",
+            "closeness": 0.0
+          }
+        ],
+        "electre_i": [
+          {
+            "rank": 1,
+            "crop": "Cotton",
+            "net_outranking_count": 5
+          },
+          {
+            "rank": 2,
+            "crop": "Groundnut",
+            "net_outranking_count": 4
+          },
+          {
+            "rank": 3,
+            "crop": "Chickpea",
+            "net_outranking_count": 2
+          },
+          {
+            "rank": 4,
+            "crop": "Soybean",
+            "net_outranking_count": 1
+          },
+          {
+            "rank": 5,
+            "crop": "Maize",
+            "net_outranking_count": -1
+          },
+          {
+            "rank": 6,
+            "crop": "Wheat",
+            "net_outranking_count": -3
+          },
+          {
+            "rank": 7,
+            "crop": "Rice",
+            "net_outranking_count": -4
+          },
+          {
+            "rank": 8,
+            "crop": "Sugarcane",
+            "net_outranking_count": -4
+          }
+        ]
+      },
+      "top1_crops": {
+        "equal_weight": "Chickpea",
+        "crisp_ahp": "Chickpea",
+        "fuzzy_ahp": "Groundnut",
+        "electre_i": "Cotton"
+      },
+      "top3_overlap_with_fuzzy": {
+        "equal_weight_jaccard": 0.2,
+        "crisp_ahp_jaccard": 0.5,
+        "electre_i_jaccard": 0.5
+      },
+      "rank_correlations": {
+        "spearman_equal_vs_fuzzy": 0.0476,
+        "spearman_crisp_vs_fuzzy": 0.5476,
+        "spearman_fuzzy_vs_electre": 0.6905
+      },
+      "execution_latencies_ms": {
+        "equal_weight_topsis": 0.032,
+        "crisp_ahp_topsis": 0.029,
+        "fuzzy_ahp_topsis": 0.029,
+        "electre_i": 0.107
+      }
+    }
+  ]
+}

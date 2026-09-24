@@ -9,7 +9,19 @@ function SourceBadge({ source, locale }) {
   let bgClass = "bg-brand-primary/10 text-brand-primary border-brand-primary/20";
   let title = `${t("status.sourceData", locale)}: ${source}`;
 
-  if (source === "mock") {
+  if (source === "soilgrids") {
+    badgeText = "MODEL";
+    bgClass = "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+    title = "ISRIC SoilGrids v2.0 Model Prediction";
+  } else if (source === "lab_measurement") {
+    badgeText = "LAB";
+    bgClass = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+    title = "Verified Laboratory Soil Sample";
+  } else if (typeof source === "string" && source.includes("cached")) {
+    badgeText = "CACHED";
+    bgClass = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+    title = "Cached Historical Observation";
+  } else if (source === "mock") {
     badgeText = t("status.mockBadge", locale);
     bgClass = "bg-brand-accent/15 text-brand-accent border-brand-accent/30";
     title = t("status.mockFallback", locale);

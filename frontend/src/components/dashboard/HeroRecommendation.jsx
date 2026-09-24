@@ -48,6 +48,11 @@ export default function HeroRecommendation({ data, loading, locale }) {
 
   const whySummary = buildExplanation(data, locale);
 
+  const nut = data?.fertilizer_plan?.nutrient_requirements;
+  const fertDisplay = nut
+    ? `🌱 N-P-K: ${nut.nitrogen_kg_per_acre}-${nut.phosphorus_kg_per_acre}-${nut.potassium_kg_per_acre} kg/ac`
+    : t("plan.fertPerAcre", locale, { fert: fertPerAcre });
+
   return (
     <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-card shadow-card p-8 transition-all hover:border-brand-primary/30">
       {/* Top Banner Chip */}
@@ -116,7 +121,7 @@ export default function HeroRecommendation({ data, loading, locale }) {
 
         <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface border border-brand-primary/20 shadow-sm text-xs font-semibold text-ink-primary">
           <Sprout className="w-4 h-4 text-status-good" />
-          <span>{t("plan.fertPerAcre", locale, { fert: fertPerAcre })}</span>
+          <span>{fertDisplay}</span>
         </div>
 
         <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface border border-brand-primary/20 shadow-sm text-xs font-semibold text-ink-primary">

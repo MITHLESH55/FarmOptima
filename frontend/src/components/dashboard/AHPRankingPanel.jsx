@@ -195,42 +195,106 @@ export default function AHPRankingPanel({ data, locale }) {
           </ResponsiveContainer>
         </div>
 
-        {/* Detailed Crop Rank List with Inline ELECTRE Chips */}
-        <div className="mt-6 space-y-3 pt-5 border-t border-ink-secondary/15">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink-secondary block mb-2">
-            {t("ranking.matrixTitle", locale)}
-          </span>
-          {chartData.map((c) => (
-            <div
-              key={c.cropOriginal}
-              className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                c.rank === 1
-                  ? "bg-brand-primary/10 border-brand-primary/30 shadow-sm"
-                  : "bg-surface border-ink-secondary/15 hover:border-ink-secondary/30"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
-                    c.rank === 1
-                      ? "bg-brand-primary text-surface"
-                      : "bg-ink-secondary/15 text-ink-primary"
-                  }`}
-                >
-                  #{c.rank}
-                </span>
-                <span className="font-bold text-sm text-ink-primary">{c.crop}</span>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="text-xs text-ink-secondary">
-                  {t("ranking.topsisLabel", locale, { score: c.topsis.toFixed(4) })}
-                </div>
-                {/* ELECTRE rendered as a small inline chip */}
-                <DivergingBar value={c.electre} compact locale={locale} />
-              </div>
+        {/* Detailed Crop Rank List with Inline ELECTRE Chips & Auditable Table */}
+        <div className="mt-8 space-y-4 pt-6 border-t border-ink-secondary/15">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-ink-secondary block">
+                {t("ranking.matrixTitle", locale)}
+              </span>
+              <p className="text-[11px] text-ink-secondary mt-0.5">
+                Auditable breakdown: Criterion Scores (0–1), TOPSIS Distance Closeness ($C_i^*$), and ELECTRE-I Net Outranking ($O_i - \bar{O}_i$).
+              </p>
             </div>
-          ))}
+          </div>
+
+          {/* Full Auditable Criteria Matrix & Performance Table */}
+          <div className="overflow-x-auto rounded-xl border border-ink-secondary/15 bg-base">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface border-b border-ink-secondary/15 text-ink-secondary uppercase text-[10px] font-bold tracking-wider">
+                <tr>
+                  <th className="py-3 px-3.5 text-center">{t("dashboard.rank", locale)}</th>
+                  <th className="py-3 px-3.5">{t("explain.topCropSelected", locale) || "Crop Alternative"}</th>
+                  <th className="py-3 px-3 text-right" title={`Weight: ${(weights.climate_suitability ?? weights.climate ?? 0.45).toFixed(3)}`}>
+                    <span className="text-[#4C8C5F]">Climate</span>
+                    <span className="block text-[9px] font-normal text-ink-secondary">w={((weights.climate_suitability ?? weights.climate ?? 0.45) * 100).toFixed(0)}%</span>
+                  </th>
+                  <th className="py-3 px-3 text-right" title={`Weight: ${(weights.soil_suitability ?? weights.soil ?? 0.26).toFixed(3)}`}>
+                    <span className="text-[#8B6A4A]">Soil</span>
+                    <span className="block text-[9px] font-normal text-ink-secondary">w={((weights.soil_suitability ?? weights.soil ?? 0.26) * 100).toFixed(0)}%</span>
+                  </th>
+                  <th className="py-3 px-3 text-right" title={`Weight: ${(weights.water_efficiency ?? weights.water ?? 0.17).toFixed(3)}`}>
+                    <span className="text-[#3E7FA6]">Water</span>
+                    <span className="block text-[9px] font-normal text-ink-secondary">w={((weights.water_efficiency ?? weights.water ?? 0.17) * 100).toFixed(0)}%</span>
+                  </th>
+                  <th className="py-3 px-3 text-right" title={`Weight: ${(weights.market_value ?? weights.market ?? 0.12).toFixed(3)}`}>
+                    <span className="text-[#A9752E]">Market</span>
+                    <span className="block text-[9px] font-normal text-ink-secondary">w={((weights.market_value ?? weights.market ?? 0.12) * 100).toFixed(0)}%</span>
+                  </th>
+                  <th className="py-3 px-3.5 text-right font-bold text-brand-primary">TOPSIS Closeness</th>
+                  <th className="py-3 px-3.5 text-right font-bold text-ink-primary">ELECTRE Net</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-secondary/10 font-medium text-ink-primary">
+                {(data.crop_ranking || []).map((c) => {
+                  const crit = c.criteria_scores || {};
+                  return (
+                    <tr
+                      key={c.crop}
+                      className={`hover:bg-surface/60 transition-colors ${
+                        c.rank === 1 ? "bg-brand-primary/5 font-semibold" : ""
+                      }`}
+                    >
+                      <td className="py-2.5 px-3.5 text-center">
+                        <span
+                          className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                            c.rank === 1
+                              ? "bg-brand-primary text-surface shadow-xs"
+                              : "bg-ink-secondary/15 text-ink-primary"
+                          }`}
+                        >
+                          #{c.rank}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3.5 font-bold text-ink-primary">
+                        {translateCropName(c.crop, locale)}
+                        {c.rank === 1 && (
+                          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-brand-primary/15 text-brand-primary font-bold">
+                            RECOMMENDED
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-ink-secondary">
+                        {crit.climate_suitability !== undefined ? crit.climate_suitability.toFixed(3) : "—"}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-ink-secondary">
+                        {crit.soil_suitability !== undefined ? crit.soil_suitability.toFixed(3) : "—"}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-ink-secondary">
+                        {crit.water_efficiency !== undefined ? crit.water_efficiency.toFixed(3) : "—"}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-ink-secondary">
+                        {crit.market_value !== undefined ? crit.market_value.toFixed(3) : "—"}
+                      </td>
+                      <td className="py-2.5 px-3.5 text-right font-mono font-bold text-brand-primary">
+                        {typeof c.topsis_closeness === "number" ? c.topsis_closeness.toFixed(4) : c.topsis_closeness}
+                      </td>
+                      <td className="py-2.5 px-3.5 text-right">
+                        <DivergingBar value={c.electre_net_outranking} compact locale={locale} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-surface border border-ink-secondary/15 text-[11px] text-ink-secondary space-y-1">
+            <div className="font-semibold text-ink-primary">Mathematical Decision Formulation:</div>
+            <div>• <strong>AHP Weights:</strong> Derived from pairwise comparison eigenvector analysis (CR = {cr}).</div>
+            <div>• <strong>TOPSIS Closeness:</strong> C_i = D_i^- / (D_i^+ + D_i^-) in [0, 1], where D_i^+ is Euclidean distance to the ideal-best profile and D_i^- is distance to ideal-worst.</div>
+            <div>• <strong>ELECTRE-I Net Score:</strong> O_i - Ō_i = (candidates i outranks) - (candidates that outrank i) under concordance threshold c=0.6, discordance d=0.4.</div>
+          </div>
         </div>
       </div>
     </div>

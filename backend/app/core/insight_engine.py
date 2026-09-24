@@ -132,21 +132,16 @@ def generate_environmental_insight(context: FarmContext, crop_name: str) -> Envi
     if crop_params is None:
         raise CropNotInRankingError(f"Crop '{crop_name}' is not in the crop reference database.")
 
+    from app.core.environmental_interpretation import interpret_factor_range
+
     factors: list[EnvironmentalFactorStatus] = []
 
     def add_factor(field_name: str, value: float | None, preferred_min: float | None = None, preferred_max: float | None = None):
-        if value is None:
+        status = interpret_factor_range(value, preferred_min, preferred_max)
+        if status == "unavailable":
             status = "not_available"
             preferred_min = None
             preferred_max = None
-        elif preferred_min is None and preferred_max is None:
-            status = "no_reference_configured"
-        elif preferred_min <= value <= preferred_max:
-            status = "within_preferred_range"
-        elif value < preferred_min:
-            status = "below_preferred_range"
-        else:
-            status = "above_preferred_range"
         factors.append(
             EnvironmentalFactorStatus(
                 field=field_name,

@@ -163,6 +163,9 @@ def build_farm_context(recommendation: RecommendationResponse) -> FarmContext:
         crop_names_in_ranking=crop_names,
         # Resource plan
         resource_plan=resource_plan_ctx,
+        # Structured Fertilizer Plan & Reference Ranges
+        fertilizer_plan=recommendation.fertilizer_plan.model_dump() if recommendation.fertilizer_plan else None,
+        top_crop_reference_ranges=recommendation.top_crop_reference_ranges,
         # Existing explanation
         ai_explanation=recommendation.ai_explanation,
     )

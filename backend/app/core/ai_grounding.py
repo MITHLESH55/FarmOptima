@@ -142,6 +142,29 @@ def build_grounding_prompt(context: FarmContext, question: str, language: str = 
             f"Nitrogen Fertilizer Need: ~{top_crop_params.get('fertilizer_n_kg_per_acre')} kg/acre\n"
         )
 
+    fertilizer_plan_lines = ""
+    if getattr(context, "fertilizer_plan", None) and isinstance(context.fertilizer_plan, dict):
+        fp = context.fertilizer_plan
+        nr = fp.get("nutrient_requirements", {})
+        comm = fp.get("commercial_fertilizers", [])
+        sch = fp.get("application_schedule", [])
+        area = fp.get("field_area_acres", 1.0)
+        fertilizer_plan_lines = (
+            f"\n--- Detailed Fertilizer Plan (Field Area: {area} acres) ---\n"
+            f"Nutrient Targets (per acre): N: {nr.get('nitrogen_kg_per_acre', 0)} kg/acre, "
+            f"P2O5: {nr.get('phosphorus_kg_per_acre', 0)} kg/acre, "
+            f"K2O: {nr.get('potassium_kg_per_acre', 0)} kg/acre\n"
+            f"Total Field Nutrient Need ({area} acres): N: {nr.get('total_field_nitrogen_kg', 0)} kg, "
+            f"P2O5: {nr.get('total_field_phosphorus_kg', 0)} kg, "
+            f"K2O: {nr.get('total_field_potassium_kg', 0)} kg\n"
+        )
+        if comm:
+            comm_items = [f"{c.get('name')}: {c.get('quantity_kg_per_acre', 0)} kg/acre ({c.get('quantity_kg_total', 0)} kg total)" for c in comm]
+            fertilizer_plan_lines += f"Commercial Products: {', '.join(comm_items)}\n"
+        if sch:
+            sch_items = [f"{s.get('stage')}: DAP {s.get('dap_kg', 0)}kg, Urea {s.get('urea_kg', 0)}kg, MOP {s.get('mop_kg', 0)}kg (Total: {s.get('total_kg', 0)}kg)" for s in sch]
+            fertilizer_plan_lines += f"Application Schedule: {'; '.join(sch_items)}\n"
+
     prompt = f"""You are FarmOptima's agricultural AI assistant. Your ONLY job is to answer
 the farmer's question using the verified recommendation data provided below.
 
@@ -201,9 +224,15 @@ Irrigation schedule: {context.resource_plan.irrigation_schedule}
 Optimizer: {context.resource_plan.optimizer_method}
 Best fitness: {context.resource_plan.optimizer_best_fitness:.6f}
 Generations run: {context.resource_plan.optimizer_generations_run}
-
+{fertilizer_plan_lines}
 --- NSGA-II Pareto Front (top options) ---
 {pareto_lines}
+
+--- Data Sources & Provenance ---
+Weather Provider: {context.weather_source} (completeness: {context.data_completeness_weather})
+Soil Provider: {context.soil_source} (completeness: {context.data_completeness_soil})
+Satellite Provider: {context.satellite_source} (completeness: {context.data_completeness_satellite})
+Market Provider: {context.market_source} (completeness: {context.data_completeness_market})
 
 --- FarmOptima Explanation (template-based) ---
 {context.ai_explanation}
@@ -297,13 +326,14 @@ def _collect_context_numbers(context: FarmContext) -> list[float]:
             except ValueError:
                 pass
 
-    # Parse numbers embedded in template ai_explanation
-    if context.ai_explanation:
-        for m in _NUMBER_RE.finditer(context.ai_explanation):
-            try:
-                nums.append(float(m.group().replace(",", "").rstrip("%")))
-            except ValueError:
-                pass
+    # Parse numbers embedded in date strings
+    for date_str in (context.generated_at, context.satellite_scene_date, getattr(context.ndvi, "scene_date", None) if context.ndvi else None):
+        if date_str:
+            for m in _NUMBER_RE.finditer(str(date_str)):
+                try:
+                    nums.append(float(m.group().replace(",", "").rstrip("%")))
+                except ValueError:
+                    pass
 
     if context.ndvi is not None:
         nums.append(context.ndvi.value)
@@ -348,6 +378,31 @@ def _collect_context_numbers(context: FarmContext) -> list[float]:
         nums.append(w * 100.0)
         nums.append(round(w * 100.0, 1))
         nums.append(round(w * 100.0, 2))
+
+    # Add numbers from structured fertilizer_plan if present
+    if getattr(context, "fertilizer_plan", None) and isinstance(context.fertilizer_plan, dict):
+        fp = context.fertilizer_plan
+        if "field_area_acres" in fp and isinstance(fp["field_area_acres"], (int, float)):
+            nums.append(float(fp["field_area_acres"]))
+            nums.append(round(float(fp["field_area_acres"]), 1))
+        nr = fp.get("nutrient_requirements", {})
+        for val in nr.values():
+            if isinstance(val, (int, float)):
+                nums.append(float(val))
+                nums.append(round(float(val), 1))
+                nums.append(round(float(val)))
+        for comm in fp.get("commercial_fertilizers", []):
+            for val in comm.values():
+                if isinstance(val, (int, float)):
+                    nums.append(float(val))
+                    nums.append(round(float(val), 1))
+                    nums.append(round(float(val)))
+        for stage in fp.get("application_schedule", []):
+            for val in stage.values():
+                if isinstance(val, (int, float)):
+                    nums.append(float(val))
+                    nums.append(round(float(val), 1))
+                    nums.append(round(float(val)))
 
     # Add agronomic parameters from CROP_DATABASE for ALL evaluated crops
     for crop_name, params in CROP_DATABASE.items():
