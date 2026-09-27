@@ -785,4 +785,6 @@ AI + ML + GIS + Remote Sensing + MCDM + Optimization + Explainable AI
 
 Built as a final-year engineering project focused on practical AI, intelligent decision-making and sustainable resource planning.
 
+
+<!-- Documentation maintained by contributors. -->
 </div>
