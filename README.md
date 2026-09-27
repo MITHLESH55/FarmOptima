@@ -558,7 +558,11 @@ Windows
 
 .venv\Scripts\activate
 pip install -r requirements.txt
+Windows:
 copy .env.example .env
+
+macOS / Linux:
+cp .env.example .env
 uvicorn app.main:app --reload --port 8000
 
 3. Frontend
