@@ -1361,3 +1361,5 @@ Add a formal open-source license such as MIT, Apache-2.0, or another license onl
 
 From raw farm data to explainable decisions — FarmOptima connects environmental intelligence, decision science and optimization into one practical agricultural platform.
 
+
+<!-- Documentation maintained by contributors. -->
